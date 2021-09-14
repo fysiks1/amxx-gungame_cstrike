@@ -1,5 +1,8 @@
 [en]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Cancel
 CLOSE = Close
 FRIENDLYFIRE_ON = %%gFriendly Fire is ON!!!%%e Watch your fire!
@@ -139,9 +142,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = wins
 WON = won
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [ls]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = C4Nc31
 CLOSE = C10$3
 FRIENDLYFIRE_ON = %%gF|2!3|\||)1y F!|23 !$ ON!!!%%e W4+ch J00|2 |=!|23!
@@ -280,9 +288,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = w!N$
 WON = w0|\|
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [de]
 AFK_KILL = Dein Kill zaehlte nicht weil %%n%s%%e AFK ist
+AUTOVOTE_RES1 = Spielt GunGame im Teamplay Modus
+AUTOVOTE_RES2 = Spielt normales GunGame
+AUTOVOTE_RES3 = Spielt kein GunGame
 CANCEL = Abbruch
 CLOSE = Schliessen
 FRIENDLYFIRE_ON = %%gFriendly Fire ist AN!!!%%e Pass auf wo Du hinschiesst!
@@ -421,9 +434,14 @@ WIN_MOTD_LINE8C = Es sind noch <font color=#00CC00>%i<font color=white> Runden a
 WINS = Siege
 WON = gewinnt
 WON_TEAM = Das %%n%s%%e Team hat gewonnen
+YES_REGULAR = Ja, normaler Modus
+YES_TEAMPLAY = Ja, Teamplay Modus
 
 [nl]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Anuleer
 CLOSE = Sluit
 FRIENDLYFIRE_ON = %%gVriendschapelijk vuur is aan!!!%%e Let op waar je schiet!
@@ -562,9 +580,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = winnen
 WON = gewonnen
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [fr]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Annuler
 CLOSE = Fermer
 FRIENDLYFIRE_ON = %%gLe mode Friendly Fire est ACTIF !!%%e Fais attention ou tu tires !
@@ -704,9 +727,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = gagne
 WON = gagne la partie
 WON_TEAM = Les %%n%s%%e ont gagnes !
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [cn]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = 取消
 CLOSE = 关闭
 FRIENDLYFIRE_ON = %%g友军伤害-打开!!!%%e 要小心哦!
@@ -847,9 +875,14 @@ WINS = 获胜者
 WON = 获胜者
 WON_TEAM = The %%n%s%%e team won
 YES = 是
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [bp]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Cancelar
 CLOSE = Fechar
 GAINED_POINTS = Voce acabou de ganhar %%g%i%%e pontos (%%g%i%%e total)!
@@ -987,9 +1020,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = vitorias 
 WON = ganhou
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [es]
 AFK_KILL = Tu frag no conto ya que %%n%s%%e estaba AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Cancelar
 CLOSE = Cerrar
 FRIENDLYFIRE_ON = %%gFuego Amigo Activado!!!%%e Mira donde disparas!
@@ -1128,9 +1166,14 @@ WIN_MOTD_LINE8C = Hay <font color=#00CC00>%i<font color=white> rondas de este ma
 WINS = victorias
 WON = gano
 WON_TEAM = El equipo %%n%s%%e gano
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [sv]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Avbryt
 CLOSE = Stang
 FRIENDLYFIRE_ON = %%CVanskaplig Eld ar aktiverad!!!%%e Var forsiktig!!!
@@ -1263,9 +1306,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = vinster
 WON = vann
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [fi]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Peruuta
 CLOSE = Sulje
 GAINED_POINTS = Ansaitsit juuri %%g%i%%e pistett'a' (%%g%i%%e yhteens'a')!
@@ -1403,9 +1451,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = voitot
 WON = voitto
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [ro]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Anuleaza
 CLOSE = Inchide
 FRIENDLYFIRE_ON = %%gFriendly Fire este ON!!!%%e Ai grija in cine tragi!
@@ -1546,9 +1599,14 @@ WINS = castigate
 WON = castigat
 WON_TEAM = The %%n%s%%e team won
 YES = Da
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [da]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Cancel
 CLOSE = Close
 FRIENDLYFIRE_ON = %%gFriendly Fire is ON!!!%%e Pas paa ikke at skyde dine holdkammerater!
@@ -1687,9 +1745,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = wins
 WON = won
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [ru]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Îòìåíà
 CLOSE = Çàêðûòü
 FRIENDLYFIRE_ON = %%gFriendly Fire ÂÊËÞ×ÅÍ!!!%%e Íå ïàëè ïî ñâîèì!!!
@@ -1830,9 +1893,14 @@ WINS = ïîáåä
 WON = ïîáåäèëè
 WON_TEAM = The %%n%s%%e team won
 YES = äà ¸ïò
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [pl]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Anuluj
 CLOSE = Zamknij
 FRIENDLYFIRE_ON = %%gFriendly Fire jest WLACZONY!!!%%e Uwazaj jak strzelasz!
@@ -1971,9 +2039,14 @@ WIN_MOTD_LINE8C = There are <font color=#00CC00>%i<font color=white> rounds of t
 WINS = zwyciestw
 WON = zwyciezyl
 WON_TEAM = The %%n%s%%e team won
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [sr]
 AFK_KILL = Ubistvo ti se ne racuna jer je %%n%s%%e bio AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Prekini
 CLOSE = Zatvori
 FRIENDLYFIRE_ON = %%gFriendly Fire je Ukljucen!!!%%e Pazi gde pucas!
@@ -2111,9 +2184,14 @@ WIN_MOTD_LINE8C = Ima jos <font color=#00CC00>%i<font color=white> rundi na ovoj
 WINS = pobedjuje
 WON = je pobednik!
 WON_TEAM = %%n%s%%e tim je pobedio
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [lv]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Atcelt
 CLOSE = Slēgt
 FRIENDLYFIRE_ON = %%gKomandas uguns IESLĒGTS!!!%%e Uzmanies kur šauj!
@@ -2251,9 +2329,14 @@ WINS = uzvaras
 WON = vinnēja
 WON_TEAM = %%n%s%%e komanda vinnēja
 YES = Jā
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode
 
 [bg]
 AFK_KILL = Убийството ти не е зачетено защото %%n%s%%e беше AFK
+AUTOVOTE_RES1 = Playing GunGame with teamplay mode
+AUTOVOTE_RES2 = Playing regular GunGame
+AUTOVOTE_RES3 = Not playing GunGame
 CANCEL = Отказ
 CLOSE = Затвори
 FRIENDLYFIRE_ON = %%gFriendly Fire е включен!!!%%e Гледай къде стреляш!
@@ -2393,3 +2476,5 @@ WIN_MOTD_LINE8C = Има още <font color=#00CC00>%i<font color=white> рун�
 WINS = победи
 WON = победа
 WON_TEAM = %%n%s%%e отборът победи
+YES_REGULAR = Yes, regular mode
+YES_TEAMPLAY = Yes, teamplay mode

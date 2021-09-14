@@ -11,9 +11,9 @@
 // Thanks to VEN for Fakemeta Utilities to ease development.
 //
 // Thanks a lot to all of my supporters, but especially:
-// 3volution, aligind4h0us3, arkshine, Curryking, Gunny,
-// IdiotSavant, Mordekay, polakpolak, raa, Silver Dragon,
-// and ToT | V!PER.
+// 3volution, aligind4h0us3, arkshine, bmp, Curryking,
+// Gunny, IdiotSavant, Mordekay, polakpolak, raa, Silver
+// Dragon, ToT | V!PER, and Vm|Mayhem.
 //
 // Thanks especially to all of the translators:
 // arkshine, b!orn, commonbullet, Curryking, Deviance,
@@ -31,7 +31,7 @@
 #include <hamsandwich>
 
 // defines to be left alone
-new const GG_VERSION[] =	"2.11c";
+new const GG_VERSION[] =	"2.12";
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 #define WINSOUNDS_SIZE		(MAX_WINSOUNDS*MAX_WINSOUND_LEN)+1 // for gg_sound_winner
@@ -96,6 +96,7 @@ enum
 #define TASK_REFRESH_NADE		1200
 #define TASK_LEADER_DISPLAY		1300
 #define TASK_PLAY_LEAD_SOUNDS		1400
+#define TASK_CHECK_JOINCLASS		1500
 
 //**********************************************************************
 // VARIABLE DEFINITIONS
@@ -111,7 +112,7 @@ gg_kills_per_lvl, gg_vote_custom, gg_changelevel_custom, gg_ammo_amount,
 gg_stats_file, gg_stats_prune, gg_refill_on_kill, gg_colored_messages, gg_tk_penalty,
 gg_save_temp, gg_stats_mode, gg_pickup_others, gg_stats_winbonus, gg_map_iterations,
 gg_warmup_multi, gg_stats_ip, gg_extra_nades, gg_endmap_setup, gg_autovote_rounds,
-gg_autovote_ratio, gg_autovote_delay, gg_autovote_time, gg_ignore_bots, gg_nade_refresh,
+gg_autovote_ratio, gg_autovote_delay, gg_autovote_time, gg_autovote_mode, gg_ignore_bots, gg_nade_refresh,
 gg_block_equips, gg_leader_display, gg_leader_display_x, gg_leader_display_y,
 gg_sound_takenlead, gg_sound_tiedlead, gg_sound_lostlead, gg_lead_sounds, gg_knife_elite,
 gg_teamplay, gg_teamplay_melee_mod, gg_teamplay_nade_mod, gg_suicide_penalty, gg_winner_motd,
@@ -134,7 +135,7 @@ new weaponSlots[31] = { -1, 2, -1, 1, 4, 1, 5, 1, 1, 4, 2, 2, 1, 1, 1, 1, 2, 2, 
 // misc
 new weapons_menu, scores_menu, level_menu, warmup = -1, warmupWeapon[24], voted, won, trailSpr, roundEnded,
 menuText[512], dummy[2], tempSave[TEMP_SAVES][30], czero, maxPlayers, mapIteration = 1, cfgDir[32],
-autovoted, autovotes[2], roundsElapsed, gameCommenced, cycleNum = -1, czbot_hams, mp_friendlyfire,
+autovoted, autovotes[3], autovote_mode, roundsElapsed, gameCommenced, cycleNum = -1, czbot_hams, mp_friendlyfire,
 winSounds[MAX_WINSOUNDS][MAX_WINSOUND_LEN+1], numWinSounds, currentWinSound, hudSyncWarmup, hudSyncReqKills,
 hudSyncLDisplay, shouldWarmup, ggActive, teamLevel[3], teamLvlWeapon[3][24], teamScore[3], bombMap, hostageMap,
 bombStatus[4], c4planter, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, hudSyncCountdown, Array:statsArray,
@@ -235,7 +236,7 @@ public plugin_init()
 	register_clcmd("say_team","cmd_say");
 
 	// menus
-	register_menucmd(register_menuid("autovote_menu"),MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,"autovote_menu_handler");
+	register_menucmd(register_menuid("autovote_menu"),MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_0,"autovote_menu_handler");
 	register_menucmd(register_menuid("welcome_menu"),1023,"welcome_menu_handler");
 	register_menucmd(register_menuid("restart_menu"),MENU_KEY_1|MENU_KEY_0,"restart_menu_handler");
 	weapons_menu = register_menuid("weapons_menu");
@@ -269,7 +270,8 @@ public plugin_init()
 	gg_afk_protection = register_cvar("gg_afk_protection","0");
 
 	// autovote cvars
-	gg_autovote_rounds = register_cvar("gg_autovote_rounds","0");
+	gg_autovote_mode = register_cvar("gg_autovote_mode","0");
+	gg_autovote_rounds = register_cvar("gg_autovote_rounds","1");
 	gg_autovote_delay = register_cvar("gg_autovote_delay","8.0");
 	gg_autovote_ratio = register_cvar("gg_autovote_ratio","0.51");
 	gg_autovote_time = register_cvar("gg_autovote_time","10.0");
@@ -402,17 +404,17 @@ public plugin_precache()
 	get_configsdir(cfgDir,31);
 
 	// sound cvars
-	gg_sound_levelup = register_cvar("gg_sound_levelup","sound/gungame/smb3_powerup.wav");
-	gg_sound_leveldown = register_cvar("gg_sound_leveldown","sound/gungame/smb3_powerdown.wav");
-	gg_sound_levelsteal = register_cvar("gg_sound_levelsteal","sound/gungame/smb3_1-up.wav");
-	gg_sound_nade = register_cvar("gg_sound_nade","sound/gungame/nade_level.wav");
-	gg_sound_knife = register_cvar("gg_sound_knife","sound/gungame/knife_level.wav");
-	gg_sound_welcome = register_cvar("gg_sound_welcome","sound/gungame/gungame2.wav");
-	gg_sound_triple = register_cvar("gg_sound_triple","sound/gungame/smb_star.wav");
+	gg_sound_levelup = register_cvar("gg_sound_levelup","sound/gungame/gg_levelup.wav");
+	gg_sound_leveldown = register_cvar("gg_sound_leveldown","sound/ambience/xtal_down1.wav");
+	gg_sound_levelsteal = register_cvar("gg_sound_levelsteal","sound/turret/tu_die.wav");
+	gg_sound_nade = register_cvar("gg_sound_nade","sound/gungame/gg_nade_level.wav");
+	gg_sound_knife = register_cvar("gg_sound_knife","sound/gungame/gg_knife_level.wav");
+	gg_sound_welcome = register_cvar("gg_sound_welcome","sound/gungame/gg_welcome.wav");
+	gg_sound_triple = register_cvar("gg_sound_triple","sound/gungame/gg_triple.wav");
 	gg_sound_winner = register_cvar("gg_sound_winner","media/Half-Life03.mp3;media/Half-Life08.mp3;media/Half-Life11.mp3;media/Half-Life17.mp3");
-	gg_sound_takenlead = register_cvar("gg_sound_takenlead","sound/gungame/takenlead.wav");
-	gg_sound_tiedlead = register_cvar("gg_sound_tiedlead","sound/gungame/tiedlead.wav");
-	gg_sound_lostlead = register_cvar("gg_sound_lostlead","sound/gungame/lostlead.wav");
+	gg_sound_takenlead = register_cvar("gg_sound_takenlead","sound/gungame/gg_takenlead.wav");
+	gg_sound_tiedlead = register_cvar("gg_sound_tiedlead","sound/gungame/gg_tiedlead.wav");
+	gg_sound_lostlead = register_cvar("gg_sound_lostlead","sound/gungame/gg_lostlead.wav");
 	gg_lead_sounds = register_cvar("gg_lead_sounds","0.8");
 
 	mp_friendlyfire = get_cvar_pointer("mp_friendlyfire");
@@ -475,7 +477,7 @@ public plugin_precache()
 	}
 
 	// some generic, non-changing things
-	precache_sound("gungame/brass_bell_C.wav");
+	precache_sound("gungame/gg_brass_bell.wav");
 	precache_sound("buttons/bell1.wav");
 	precache_sound("common/null.wav");
 
@@ -611,20 +613,14 @@ public client_disconnect(id)
 	statsPosition[id] = 0;
 }
 
-// connection BEGIN!
-public client_connect(id)
-{
-	lastKilled[id] = -1; // skip first Ham_Spawn
-}
-
 // someone joins, monitor ham hooks
 public client_putinserver(id)
 {
 	if(czero && !czbot_hams && is_user_bot(id) && get_pcvar_num(bot_quota) > 0)
-	{
-		lastKilled[id] = 0; // don't skip first Ham_Spawn
 		set_task(0.1,"czbot_hook_ham",id);
-	}
+	
+	// bots don't call joinclass
+	if(is_user_bot(id)) cmd_joinclass(id);
 }
 
 // delay for private data to initialize --
@@ -641,7 +637,11 @@ public czbot_hook_ham(id)
 		RegisterHamFromEntity(Ham_Spawn,id,"ham_player_spawn",1);
 		RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_pre",0);
 		RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_post",1);
+
 		czbot_hams = 1;
+		
+		// bug fix for mid-round spawning, thanks to MeRcyLeZZ
+		if(is_user_alive(id)) ham_player_spawn(id);
 	}
 }
 
@@ -819,11 +819,11 @@ public event_new_round()
 	c4planter = 0;
 	bombStatus[3] = BOMB_PICKEDUP;
 
-	if(!autovoted)
+	if(gameCommenced && !autovoted)
 	{
-		new autovote_rounds = get_pcvar_num(gg_autovote_rounds);
+		autovote_mode = get_pcvar_num(gg_autovote_mode);
 
-		if(autovote_rounds && gameCommenced && roundsElapsed >= autovote_rounds)
+		if(autovote_mode && roundsElapsed >= get_pcvar_num(gg_autovote_rounds))
 		{
 			autovoted = 1;
 			set_task(get_pcvar_float(gg_autovote_delay),"autovote_start");
@@ -1071,14 +1071,16 @@ public event_intermission()
 		}
 		
 		// grab a player from the winning and losing teams
-		new plWinner, plLoser;
+		new plWinner, plLoser, team;
 		for(player=1;player<=maxPlayers;player++)
 		{
 			if(is_user_connected(player) && on_valid_team(player))
 			{
-				if(!plWinner && _:cs_get_user_team(player) == winner) plWinner = player;
-				else if(!plLoser) plLoser = player;
-				
+				team = _:cs_get_user_team(player);
+
+				if(!plWinner && team == winner) plWinner = player;
+				else if(!plLoser && team != winner) plLoser = player;
+
 				if(plWinner && plLoser) break;
 			}
 		}
@@ -1529,19 +1531,9 @@ public logevent_team_join()
 // a player respawned
 public ham_player_spawn(id)
 {
-	// a fix presented by vittu:
-	// when a player joins the game, they call Ham_Spawn.
-	// however, certain bots (specifically PODBot) are counted
-	// as both alive and on a team for this initial Ham_Spawn,
-	// so we get around this by blocking the first Ham_Spawn
-	// call after client_connect.
-	if(lastKilled[id] == -1) // set to -1 in client_connect
-	{
-		lastKilled[id] = 0;
-		return HAM_IGNORED;
-	}
+	if(ggActive && is_user_alive(id) && cs_get_user_team(id)) // do team check here for bots
+		spawned(id);
 
-	if(ggActive && is_user_alive(id)) spawned(id);
 	return HAM_IGNORED;
 }
 
@@ -1753,11 +1745,14 @@ public ham_player_killed_post(victim,killer,gib)
 			new name[32];
 			if(teamplay) get_user_team(killer,name,9);
 			else get_user_name(killer,name,31);
-
-			if(score[killer] - penalty < 0)
-				gungame_print(0,killer,1,"%L",LANG_PLAYER_C,(teamplay) ? "TK_LEVEL_DOWN_TEAM" : "TK_LEVEL_DOWN",name,(level[killer] > 1) ? level[killer]-1 : level[killer]);
-			else
-				gungame_print(0,killer,1,"%L",LANG_PLAYER_C,(teamplay) ? "TK_SCORE_DOWN_TEAM" : "TK_SCORE_DOWN",name,penalty);
+			
+			if(warmup <= 0 || !warmupWeapon[0])
+			{
+				if(score[killer] - penalty < 0)
+					gungame_print(0,killer,1,"%L",LANG_PLAYER_C,(teamplay) ? "TK_LEVEL_DOWN_TEAM" : "TK_LEVEL_DOWN",name,(level[killer] > 1) ? level[killer]-1 : level[killer]);
+				else
+					gungame_print(0,killer,1,"%L",LANG_PLAYER_C,(teamplay) ? "TK_SCORE_DOWN_TEAM" : "TK_SCORE_DOWN",name,penalty);
+			}
 
 			change_score(killer,-penalty);
 		}
@@ -1790,12 +1785,13 @@ public ham_player_killed_post(victim,killer,gib)
 		{
 			tpGainPoints = get_level_goal(level[killer],0);
 			tpLosePoints = get_level_goal(level[victim],0);
-			gungame_print(0,killer,1,"%L",LANG_PLAYER_C,"STOLE_LEVEL_TEAM",killerName,tpLosePoints,victimName,tpGainPoints);
+
+			if(warmup <= 0 || !warmupWeapon[0]) gungame_print(0,killer,1,"%L",LANG_PLAYER_C,"STOLE_LEVEL_TEAM",killerName,tpLosePoints,victimName,tpGainPoints);
 			
 			// allow points awarded on nade or final level if it won't level us
 			tpOverride = (score[killer] + tpGainPoints < get_level_goal(level[killer],killer));
 		}
-		else gungame_print(0,killer,1,"%L",LANG_PLAYER_C,"STOLE_LEVEL",killerName,victimName);
+		else if(warmup <= 0 || !warmupWeapon[0]) gungame_print(0,killer,1,"%L",LANG_PLAYER_C,"STOLE_LEVEL",killerName,victimName);
 
 		if(tpOverride || (canLevel && !nade))
 		{
@@ -1942,7 +1938,10 @@ public cmd_gungame_vote(id,lvl,cid)
 	if(!cmd_access(id,lvl,cid,1))
 		return PLUGIN_HANDLED;
 
+	autovote_mode = 1; // override
+	//autovote_mode = get_pcvar_num(gg_autovote_mode);
 	autovote_start();
+
 	console_print(id,"[GunGame] Started a vote to play GunGame");
 
 	return PLUGIN_HANDLED;
@@ -2228,21 +2227,20 @@ public cmd_joinclass(id)
 	if(roundEnded || (bombStatus[3] == BOMB_PLANTED && !get_pcvar_num(gg_dm_spawn_afterplant)))
 		return PLUGIN_CONTINUE;
 
-	set_task(5.0,"check_joinclass",id);
+	set_task(5.0,"check_joinclass",TASK_CHECK_JOINCLASS+id);
 	return PLUGIN_CONTINUE;
 }
 
 // wait a bit after joinclass to see if we should jump in
-public check_joinclass(id)
+public check_joinclass(taskid)
 {
+	new id = taskid-TASK_CHECK_JOINCLASS;
+
 	if(!is_user_connected(id)) return;
 
 	// already respawning
-	if(task_exists(TASK_RESPAWN+id) || is_user_alive(id))
+	if(task_exists(TASK_RESPAWN+id) || is_user_alive(id) || !on_valid_team(id))
 		return;
-
-	// not on a valid team
-	if(!on_valid_team(id)) return;
 
 	respawn(TASK_RESPAWN+id);
 }
@@ -2562,18 +2560,18 @@ public check_deathmatch(taskid)
 	// left the game, or gungame is now disabled
 	if(!is_user_connected(id) || !ggActive) return;
 
-	// now on spectator
-	if(!on_valid_team(id)) return;
+	// now on spectator, or spawned already
+	if(!on_valid_team(id) || is_user_alive(id)) return;
 
-	// DM still not enabled, keep waiting
-	if(!get_pcvar_num(gg_dm))
+	// DM still not enabled, keep waiting (or: we are still on choose-a-class screen)
+	if(!get_pcvar_num(gg_dm) || !pev(id,pev_iuser1))
 	{
 		set_task(10.0,"check_deathmatch",taskid);
 		return;
 	}
 
 	// DM is enabled, respawn
-	if(!is_user_alive(id)) respawn(TASK_RESPAWN+id);
+	respawn(TASK_RESPAWN+id);
 }
 
 // what do you think??
@@ -3778,15 +3776,17 @@ spawned(id)
 	// just joined
 	if(!level[id])
 	{
+		new teamplay = get_pcvar_num(gg_teamplay);
+
 		// warming up
-		if(warmup > 0)
+		if(warmup > 0 && !teamplay)
 		{
-			change_level(id,1,1_,1); // just joined, always score
+			change_level(id,1,1,_,1); // just joined, always score
 		}
 		else
 		{
 			// handicap
-			new handicapMode = get_pcvar_num(gg_handicap_on), teamplay = get_pcvar_num(gg_teamplay);
+			new handicapMode = get_pcvar_num(gg_handicap_on);
 			if(handicapMode && !teamplay)
 			{
 				new rcvHandicap = 1;
@@ -3870,7 +3870,7 @@ spawned(id)
 				}
 
 				// not eligible for handicap (in top10 with gg_top10_handicap disabled)
-				else change_level(id,1,1_,1); // just joined, always score
+				else change_level(id,1,1,_,1); // just joined, always score
 			}
 
 			// no handicap enabled or playing teamplay
@@ -3884,14 +3884,14 @@ spawned(id)
 					{
 						// my team has a level already
 						if(teamLevel[team])
-						{
+						{						
 							change_level(id,teamLevel[team],1,_,1,_,0); // just joined, always score, don't effect team
-							if(teamScore[team]) change_score(id,teamScore[team],_,0); // don't effect team
+							if(score[id] != teamScore[team]) change_score(id,teamScore[team]-score[id],_,0); // don't effect team
 						}
 						
 						// my team just started
 						else
-						{
+						{						
 							// initialize its values
 							teamplay_update_level(team,1,id);
 							teamplay_update_score(team,0,id);
@@ -3997,6 +3997,13 @@ player_teamchange(id,oldTeam,newTeam)
 	
 	// remember for crazy team switches
 	lastTeam[id] = newTeam;
+	
+	// allow us to join in on deathmatch
+	if(oldTeam == 0 && (newTeam == 1 || newTeam == 2) && !roundEnded && get_pcvar_num(gg_dm) && !task_exists(TASK_CHECK_JOINCLASS+id))
+	{
+		remove_task(TASK_CHECK_DEATHMATCH+id);
+		set_task(5.0,"check_deathmatch",TASK_CHECK_DEATHMATCH+id);
+	}
 	
 	// keep track of time
 	new Float:time = get_gametime();
@@ -5035,7 +5042,7 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0,play_sou
 
 		gungame_print(0,0,1,"%L",LANG_PLAYER_C,"FRIENDLYFIRE_ON");
 
-		client_cmd(0,"spk ^"gungame/brass_bell_C.wav^"");
+		client_cmd(0,"spk ^"gungame/gg_brass_bell.wav^"");
 	}
 
 	// turn off FF?
@@ -5583,11 +5590,17 @@ public show_win_screen(params[2]) // [winner,loser]
 	for(player=1;player<=maxPlayers;player++)
 	{
 		if(!is_user_connected(player)) continue;
+		
+		/*if(pointsExtraction[player][0] == 0 && pointsExtraction[player][1] == 0 && pointsExtraction[player][2] == 0)
+		{
+			log_amx("&&&&& ZERO POINTS! (3) player %i, team %i, team times: %f , %f",player,cs_get_user_team(player),teamTimes[player][winningTeam-1],teamTimes[player][losingTeam-1]);
+			log_message("&&&&& ZERO POINTS! (3) player %i, team %i, team times: %f , %f",player,cs_get_user_team(player),teamTimes[player][winningTeam-1],teamTimes[player][losingTeam-1]);
+		}*/
 
 		if(loserDC) formatex(loserName,31,"%L",player,"NO_ONE");
 		formatex(header,31,"%L",player,"WIN_MOTD_LINE1",winnerName);
 	
-		len = formatex(motd,2047,"<html><body bgcolor=black style=^"line-height:1.0^"><center><font color=#00CC00 size=7 face=Georgia>[GUNGAME] AMXX<p>");
+		len = formatex(motd,2047,"<html><head><meta http-equiv=^"Content-Type^" content=^"text/html; charset=utf-8^"></head><body bgcolor=black style=^"line-height:1.0^"><center><font color=#00CC00 size=7 face=Georgia>[GUNGAME] AMXX<p>");
 
 		len += formatex(motd[len],2047-len,"<font color=%s size=6 style=^"letter-spacing:2px^">",winnerColor);
 		len += formatex(motd[len],2047-len,"<table height=1 width=80%% cellpadding=0 cellspacing=0 bgcolor=%s><tr><td> </td></tr></table>",winnerColor);
@@ -5844,19 +5857,36 @@ teamplay_get_team_goal(team)
 public autovote_start()
 {
 	// vote in progress
-	if(autovotes[0] || autovotes[1]) return;
+	if(autovotes[0] || autovotes[1] || autovotes[2]) return;
 
 	new Float:autovote_time = get_pcvar_float(gg_autovote_time);
 
 	new i;
 	for(i=1;i<=maxPlayers;i++)
 	{
-		if(is_user_connected(i))
+		if(!is_user_connected(i)) continue;
+
+		switch(autovote_mode)
 		{
-			format(menuText,511,"\y%L^n^n\w1. %L^n2. %L^n^n0. %L",i,"PLAY_GUNGAME",i,"YES",i,"NO",i,"CANCEL");
-			show_menu(i,MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,menuText,floatround(autovote_time),"autovote_menu");
+			case 1:
+			{
+				formatex(menuText,511,"\y%L^n^n\w1. %L^n2. %L^n^n0. %L",i,"PLAY_GUNGAME",i,"YES",i,"NO",i,"CANCEL");
+				show_menu(i,MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,menuText,floatround(autovote_time),"autovote_menu");
+			}
+			case 2:
+			{
+				formatex(menuText,511,"\y%L^n^n\w1. %L^n2. %L^n^n0. %L",i,"PLAY_GUNGAME",i,"YES_TEAMPLAY",i,"YES_REGULAR",i,"CANCEL");
+				show_menu(i,MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,menuText,floatround(autovote_time),"autovote_menu");
+			}
+			default:
+			{
+				formatex(menuText,511,"\y%L^n^n\w1. %L^n2. %L^n3. %L^n^n0. %L",i,"PLAY_GUNGAME",i,"YES_TEAMPLAY",i,"YES_REGULAR",i,"NO",i,"CANCEL");
+				show_menu(i,MENU_KEY_1|MENU_KEY_2|MENU_KEY_3|MENU_KEY_0,menuText,floatround(autovote_time),"autovote_menu");
+			}
 		}
 	}
+
+	gungame_print(0,0,1,"%L",LANG_PLAYER_C,"VOTING_STARTED");
 
 	set_task(autovote_time,"autovote_result");
 }
@@ -5866,9 +5896,32 @@ public autovote_menu_handler(id,key)
 {
 	switch(key)
 	{
-		case 0: autovotes[1]++;
-		case 1: autovotes[0]++;
-		//case 9: let menu close
+		case 0: // 1.
+		{
+			/* 	MODE 1-	YES
+				MODE 2-	YES_TEAMPLAY
+				MODE 3-	YES_TEAMPLAY	*/
+				
+			autovotes[0]++;
+		}
+		case 1: // 2.
+		{
+			/*	MODE 1-	NO
+				MODE 2-	YES_REGULAR
+				MODE 3-	YES_REGULAR	*/
+				
+			if(autovote_mode == 1) autovotes[2]++;
+			else autovotes[1]++;
+		}
+		case 2: // 3.
+		{
+			/*	MODE 1-
+				MODE 2-
+				MODE 3-	NO			*/
+				
+			autovotes[2]++;
+		}
+		//case 9: 0. /* ALL MODES- CANCEL */ let menu close
 	}
 
 	return PLUGIN_HANDLED;
@@ -5877,33 +5930,148 @@ public autovote_menu_handler(id,key)
 // calculate end of vote
 public autovote_result()
 {
-	new enable, enabled = ggActive;
+	new vYes = autovotes[0] + autovotes[1], vNo = autovotes[2], vTotal = vYes + vNo, vSuccess, teamplay = get_pcvar_num(gg_teamplay), key[16];
 
-	if(autovotes[0] || autovotes[1])
+	switch(autovote_mode)
 	{
-		if(float(autovotes[1]) / float(autovotes[0] + autovotes[1]) >= get_pcvar_float(gg_autovote_ratio))
-			enable = 1;
-	}
+		case 1: // this mode asks if they want to play GunGame, yes/no
+		{
+			if(vTotal)
+			{
+				if(float(vYes) / float(vTotal) >= get_pcvar_float(gg_autovote_ratio))
+					vSuccess = 1;
+				
+				// the choice that changes the current game mode is the one that needs to meet the ratio. so if you are
+				// playing GunGame, at least however many people as defined by the ratio need to vote for it off to switch it,
+				// and vice-versa.
+				if( ( ggActive && (float(vNo) / float(vTotal))  <  get_pcvar_float(gg_autovote_ratio))
+				||  (!ggActive && (float(vYes) / float(vTotal)) >= get_pcvar_float(gg_autovote_ratio)) )
+					vSuccess = 1; // means that we will be playing GunGame
+			}
+			else if(ggActive) vSuccess = 1;
 
-	gungame_print(0,0,1,"%L (%L: %i, %L: %i)",LANG_PLAYER_C,(enable) ? "VOTING_SUCCESS" : "VOTING_FAILED",LANG_PLAYER_C,"YES",autovotes[1],LANG_PLAYER_C,"NO",autovotes[0]);
+			if(vSuccess && !ggActive)
+			{
+				restart_round(5);
+				set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_ENABLE);
+			}
+			else if(!vSuccess && ggActive)
+			{
+				restart_round(5);
+				set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_DISABLE);
+				
+				set_pcvar_num(gg_enabled,0);
+				ggActive = 0;
+			}
+	
+			if(vSuccess && teamplay) key = "AUTOVOTE_RES1";
+			else if(vSuccess && !teamplay) key = "AUTOVOTE_RES2";
+			else key = "AUTOVOTE_RES3";
+			
+			gungame_print(0,0,1,"%L %i %L - %i %L - %L :: %L",LANG_PLAYER_C,"PLAY_GUNGAME",vYes,LANG_PLAYER_C,"YES",vNo,LANG_PLAYER_C,"NO",LANG_PLAYER_C,"THE_RESULT",LANG_PLAYER_C,key);
+		}
+		case 2: // this mode asks if they want to play teamplay, yes/no
+		{
+			if(!ggActive)
+			{
+				restart_round(5);
+				set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_ENABLE);
+			}
 
-	if(enable && !enabled)
-	{
-		restart_round(5);
-		set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_ENABLE);
-	}
-	else if(!enable && enabled)
-	{
-		restart_round(5);
-		set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_DISABLE);
-		
-		set_pcvar_num(gg_enabled,0);
-		ggActive = 0;
-	}
+			if(vTotal)
+			{
+				// see above comment
+				if( ( teamplay && (float(autovotes[1]) / float(vTotal)) <  get_pcvar_float(gg_autovote_ratio))
+				||  (!teamplay && (float(autovotes[0]) / float(vTotal)) >= get_pcvar_float(gg_autovote_ratio)) )
+					vSuccess = 1; // means that we will be playing teamplay mode
+			}
+			else if(teamplay) vSuccess = 1;
 
-	// reset votes
+			if(vSuccess && !teamplay)
+			{
+				set_pcvar_num(gg_teamplay,1);
+				if(ggActive && warmup <= 0) restart_round(3);
+				
+				if(!ggActive) set_task(4.9,"force_teamplay",1);
+			}
+			else if(!vSuccess && teamplay)
+			{
+				set_pcvar_num(gg_teamplay,0);
+				if(ggActive && warmup <= 0) restart_round(3);
+				
+				if(!ggActive) set_task(4.9,"force_teamplay",0);
+			}
+	
+			if(vSuccess) key = "AUTOVOTE_RES1";
+			else key = "AUTOVOTE_RES2";
+			
+			gungame_print(0,0,1,"%L %i %L - %i %L - %L :: %L",LANG_PLAYER_C,"PLAY_GUNGAME",autovotes[0],LANG_PLAYER_C,"YES_TEAMPLAY",autovotes[1],LANG_PLAYER_C,"YES_REGULAR",LANG_PLAYER_C,"THE_RESULT",LANG_PLAYER_C,key);
+		}
+		default: // this mode asks if they want to play, teamplay/regular/no
+		{
+			if(vTotal)
+			{			
+				// see above comment
+				if( ( ggActive && (float(vNo) / float(vTotal))  <  get_pcvar_float(gg_autovote_ratio))
+				||  (!ggActive && (float(vYes) / float(vTotal)) >= get_pcvar_float(gg_autovote_ratio)) )
+					vSuccess = 1; // means that we will be playing GunGame
+			}
+			else if(ggActive) vSuccess = 1;
+
+			if(vSuccess)
+			{
+				if(!ggActive)
+				{
+					restart_round(5);
+					set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_ENABLE);
+				}
+
+				if(autovotes[0] > autovotes[1] && !teamplay)
+				{
+					set_pcvar_num(gg_teamplay,1);
+					if(ggActive && warmup <= 0) restart_round(3);
+					
+					key = "AUTOVOTE_RES1";
+					if(!ggActive) set_task(4.9,"force_teamplay",1);
+				}
+				else if(autovotes[0] < autovotes[1] && teamplay)
+				{
+					set_pcvar_num(gg_teamplay,0);
+					if(ggActive && warmup <= 0) restart_round(3);
+					
+					key = "AUTOVOTE_RES2";
+					if(!ggActive) set_task(4.9,"force_teamplay",0);
+				}
+				else // if equal, leave it be
+				{
+					if(teamplay) key = "AUTOVOTE_RES1";
+					else key = "AUTOVOTE_RES2";
+				}
+			}
+			else if(!vSuccess && ggActive)
+			{
+				restart_round(5);
+				set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_DISABLE);
+				
+				set_pcvar_num(gg_enabled,0);
+				ggActive = 0;
+			}
+
+			if(!vSuccess) key = "AUTOVOTE_RES3";
+			gungame_print(0,0,1,"%L %i %L - %i %L - %i %L - %L :: %L",LANG_PLAYER_C,"PLAY_GUNGAME",autovotes[0],LANG_PLAYER_C,"YES_TEAMPLAY",autovotes[1],LANG_PLAYER_C,"YES_REGULAR",vNo,LANG_PLAYER_C,"NO",LANG_PLAYER_C,"THE_RESULT",LANG_PLAYER_C,key);
+		}
+	}
+	
 	autovotes[0] = 0;
 	autovotes[1] = 0;
+	autovotes[2] = 0;
+}
+
+// force teamplay mode to what we want after a vote has been completed.
+// otherwise, when switching from GunGame off to on, it will be overwritten by gungame.cfg.
+public force_teamplay(mode)
+{
+	set_pcvar_num(gg_teamplay,mode);
 }
 
 //**********************************************************************
@@ -5955,12 +6123,15 @@ stats_award_points(winner)
 	// points system
 	if(stats_mode == 2)
 	{
-		new wins, Float:flPoints, iPoints, Float:winbonus = get_pcvar_float(gg_stats_winbonus), Float:percent;
+		new wins, Float:flPoints, Float:winbonus = get_pcvar_float(gg_stats_winbonus), Float:percent;
 
 		for(i=0;i<playerNum;i++)
 		{
 			player = players[i];
-			if(!is_user_connected(player)) continue;
+			if(!is_user_connected(player) || (ignore_bots && is_user_bot(player)))
+				continue;
+			
+			wins = 0; // OMG WHY DID I FORGET THIS BEFORE
 			
 			// point ratio based on time played in teamplay
 			if(teamplay && timeratio)
@@ -5985,9 +6156,7 @@ stats_award_points(winner)
 			}
 			else
 			{
-				// calculate points and add
-				flPoints = float(level[player]) - 1.0;
-				wins = 0;
+				flPoints = float(level[player]) - 1.0; // calculate points and add
 
 				// winner gets bonus points plus a win
 				if(player == winner || (teamplay && _:cs_get_user_team(player) == winningTeam))
@@ -6000,14 +6169,15 @@ stats_award_points(winner)
 			// unnecessary
 			if(flPoints < 0.5 && !wins) continue;
 
-			iPoints = floatround(flPoints);
-
-			// it's okay to add to stats
-			if(!ignore_bots || !is_user_bot(player))
+			playerWins[i] = wins;
+			playerPoints[i] = floatround(flPoints);
+			
+			// DEBUG
+			/*if(playerPoints[i] < 1)
 			{
-				playerWins[i] = wins;
-				playerPoints[i] = iPoints;
-			}
+				log_amx("***** ERROR! (1) Negative points for player %i: %i (%f / %i) | Team times: %f , %f",players[i],playerPoints[i],flPoints,wins,teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+				log_message("***** ERROR! (1) Negative points for player %i: %i (%f / %i) | Team times: %f , %f",players[i],playerPoints[i],flPoints,wins,teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+			}*/
 		}
 	}
 
@@ -6071,7 +6241,11 @@ stats_award_points(winner)
 				if(!set[i] && equal(playerAuthid[i],sfAuthid))
 				{
 					set[i] = 1;
-					setNum++;
+					
+					// I didn't win anything, who cares
+					if(!playerWins[i] && !playerPoints[i]) break;
+
+					setNum++; // important that this is below the if statement
 					
 					strtok(sfLineData,sfWins,5,sfLineData,80,'^t'); // get wins
 					strtok(sfLineData,dummy,1,sfLineData,80,'^t'); // get name
@@ -6087,6 +6261,13 @@ stats_award_points(winner)
 					pointsExtraction[players[i]][1] = playerPoints[i];
 					pointsExtraction[players[i]][2] = playerTotalPoints[i];
 					
+					// DEBUG
+					/*if(playerTotalPoints[i] < 1)
+					{
+						log_amx("***** ERROR! (2) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+						log_message("***** ERROR! (2) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+					}*/
+					
 					break;
 				}
 			}
@@ -6101,22 +6282,29 @@ stats_award_points(winner)
 	for(i=0;i<playerNum;i++)
 	{
 		// never found an existing entry, make a new one
-		if(!set[i])
+		if(!set[i] && (playerWins[i] || playerPoints[i]))
 		{
 			playerTotalPoints[i] = playerPoints[i];
-			fprintf(file,"%s^t%i^t%s^t%i^t%i",playerAuthid[i],playerWins[i],playerName[i],get_systime(),playerPoints[i]);
+			fprintf(file,"%s^t%i^t%s^t%i^t%i",playerAuthid[i],playerWins[i],playerName[i],get_systime(),playerTotalPoints[i]);
 			fputc(file,'^n');
 			
 			// so we can reference this for the MOTD
 			pointsExtraction[players[i]][0] = playerWins[i];
 			pointsExtraction[players[i]][1] = playerPoints[i];
 			pointsExtraction[players[i]][2] = playerTotalPoints[i];
+			
+			// DEBUG
+			/*if(playerTotalPoints[i] < 1)
+			{
+				log_amx("***** ERROR! (3) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+				log_message("***** ERROR! (3) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+			}*/
 		}
 		
 		get_user_team(players[i],teamName,9);
 		
-		if(players[i] == winner || (teamplay && _:cs_get_user_team(players[i]) == winningTeam))
-			log_message("^"%s<%i><%s><%s>^" triggered ^"Won_GunGame^"",playerName[i],get_user_userid(players[i]),playerAuthid[i],teamName);
+		//if(players[i] == winner || (teamplay && _:cs_get_user_team(players[i]) == winningTeam))
+		if(playerWins[i]) log_message("^"%s<%i><%s><%s>^" triggered ^"Won_GunGame^"",playerName[i],get_user_userid(players[i]),playerAuthid[i],teamName);
 
 		if(stats_mode == 2 && playerPoints[i])
 		{
@@ -6130,6 +6318,20 @@ stats_award_points(winner)
 
 	// remove our copy
 	delete_file(tempFileName);
+	
+	/*for(i=0;i<playerNum;i++)
+	{
+		if(playerWins[i] == 0 && playerPoints[i] == 0 && playerTotalPoints[i] == 0)
+		{
+			log_amx("&&&&& ZERO POINTS! (1) player %i, team %i, team times: %f , %f",players[i],cs_get_user_team(players[i]),teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+			log_message("&&&&& ZERO POINTS! (1) player %i, team %i, team times: %f , %f",players[i],cs_get_user_team(players[i]),teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+		}
+		else if(pointsExtraction[players[i]][0] == 0 && pointsExtraction[players[i]][1] == 0 && pointsExtraction[players[i]][2] == 0)
+		{
+			log_amx("&&&&& ZERO POINTS! (2) player %i, team %i, team times: %f , %f",players[i],cs_get_user_team(players[i]),teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+			log_message("&&&&& ZERO POINTS! (2) player %i, team %i, team times: %f , %f",players[i],cs_get_user_team(players[i]),teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
+		}
+	}*/
 }
 
 // get a player's last used name and wins from save file
@@ -6505,7 +6707,7 @@ public hide_money(id)
 // SUPPORT FUNCTIONS
 //**********************************************************************
 
-// gets a players info, intended for other plugins to callback
+// gets a players info, intended for other plugins to callfunc
 public get_player_info(id,&rf_level,&rf_score,rf_lvlWeapon[],len,&rf_spawnProtected,&rf_statsPosition)
 {
 	rf_level = level[id];
@@ -6750,7 +6952,7 @@ stock num_players_on_level(checkLvl)
 gungame_print(id,custom,tag,msg[],any:...)
 {
 	new changeCount, num, i, j, argnum = numargs(), player;
-	static newMsg[191], message[191], changed[5], players[32];
+	static newMsg[191], message[191], changed[8], players[32];
 
 	if(id)
 	{
@@ -6924,7 +7126,15 @@ stock start_mapvote()
 			callfunc_push_int(0); // server
 			callfunc_end();
 		}*/
+		
+		set_task(20.1,"dmm_stop_mapchange");
 	}
+}
+
+// stop DMM from changing maps after the vote has been tallied
+public dmm_stop_mapchange()
+{
+	remove_task(333333,1); // outside
 }
 
 // set amx_nextmap to the next map
@@ -7151,19 +7361,19 @@ stock get_weapon_category(id=0,name[]="")
 	return weaponSlots[id];
 }
 
-// if a player is allowed to score (at least 1 player on opposite team)
+// if a player is allowed to score (at least 1 rival player)
 stock can_score(id)
 {
 	if(!is_user_connected(id)) return 0;
 
-	new player;
-	for(player=1;player<=maxPlayers;player++)
+	new penalty = get_pcvar_num(gg_tk_penalty);
+	for(new player=1;player<=maxPlayers;player++)
 	{
-		// this player is in a position to play and is on the other team than me
-		if(player != id && is_user_connected(player) && on_valid_team(player) && cs_get_user_team(id) != cs_get_user_team(player))
-			return 1;
+		// this player is on a real team, and he's on the opposite team, or we are playing FFA
+		if( player != id && is_user_connected(player) && on_valid_team(player) && (penalty < 0 || cs_get_user_team(id) != cs_get_user_team(player)) )
+				return 1;
 	}
-	
+
 	return 0;
 }
 

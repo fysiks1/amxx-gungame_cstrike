@@ -16,8 +16,8 @@
 // and ToT | V!PER. (alphabetically)
 //
 // Thanks especially to all of the translators:
-// arkshine, b!orn, commonbullet, Curryking, D o o m,
-// Doombringer, Fr3ak0ut, godlike, harbu, jopmako,
+// arkshine, b!orn, commonbullet, Curryking, Deviance,
+// D o o m, Fr3ak0ut, godlike, harbu, iggy_bus, jopmako,
 // KylixMynxAltoLAG, Morpheus759, SAMURAI16, TEG,
 // ToT | V!PER, Twilight Suzuka, and webpsiho. (alphabetically)
 
@@ -28,12 +28,13 @@
 #include <cstrike>
 
 // defines
-#define GG_VERSION		"1.16"
+#define GG_VERSION		"1.16b"
 #define TOP_PLAYERS		10 // for !top10
 #define MAX_SPAWNS		128 // for gg_dm_spawn_random
 #define COMMAND_ACCESS		ADMIN_CVAR // for amx_gungame
-#define LANG_PLAYER_C		-76 // for gungame_print
+#define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define MAX_WEAPON_ORDERS	10 // for random gg_weapon_order
+#define TEMP_SAVES		32 // for gg_save_temp
 
 // gg_status_display
 enum
@@ -62,11 +63,11 @@ enum
 
 // cs_set_user_money
 #if cellbits == 32
-#define OFFSET_CSMONEY  115
+#define OFFSET_CSMONEY	115
 #else
-#define OFFSET_CSMONEY  140
+#define OFFSET_CSMONEY	140
 #endif
-#define OFFSET_LINUX      5
+#define OFFSET_LINUX		5
 
 // task ids
 #define TASK_END_STAR		200
@@ -86,8 +87,8 @@ enum
 #define CHANNEL_WARMUP		1
 
 // animations
-#define USP_DRAWANIM	6
-#define M4A1_DRAWANIM	5
+#define USP_DRAWANIM		6
+#define M4A1_DRAWANIM		5
 
 //
 // VARIABLE DEFINITIONS
@@ -109,7 +110,7 @@ gg_dm_countdown, gg_status_display, gg_dm_spawn_afterplant, gg_block_objectives,
 gg_stats_mode, gg_pickup_others, gg_stats_winbonus, gg_map_iterations, gg_warmup_multi,
 gg_host_kill_penalty, gg_dm_start_random, gg_stats_ip, gg_extra_nades, gg_endmap_setup,
 gg_allow_changeteam, gg_autovote_rounds, gg_autovote_ratio, gg_autovote_delay,
-gg_autovote_time;
+gg_autovote_time, gg_ignore_bots;
 
 // max clip
 stock const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25, 30, 35, 25,  12,  20,
@@ -125,7 +126,7 @@ stock const weaponSlots[] = { 0, 2, 0, 1, 4, 1, 5, 1, 1, 4, 2, 2, 1, 1, 1, 1, 2,
 
 // misc
 new scores_menu, level_menu, bombMap, hostageMap, warmup = -1, len, voted, won, trailSpr, roundEnded,
-weaponOrder[416], menuText[512], dummy[2], tempSave[32][27], c4planter, czero, bombStatus[4], maxPlayers,
+weaponOrder[416], menuText[512], dummy[2], tempSave[TEMP_SAVES][27], c4planter, czero, bombStatus[4], maxPlayers,
 gameStarted, mapIteration = 1, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, cfgDir[32],
 top10[TOP_PLAYERS][81], csrespawnEnabled, modName[12], autovoted, autovotes[2], roundsElapsed,
 gameCommenced;
@@ -235,6 +236,7 @@ public plugin_init()
 	gg_save_temp = register_cvar("gg_save_temp","300"); // = 5 * 60 = 5 minutes
 	gg_status_display = register_cvar("gg_status_display","0");
 	gg_map_iterations = register_cvar("gg_map_iterations","1");
+	gg_ignore_bots = register_cvar("gg_ignore_bots","0");
 
 	// autovote cvars
 	gg_autovote_rounds = register_cvar("gg_autovote_rounds","0");
@@ -443,9 +445,7 @@ public plugin_end()
 	{
 		new setup[512];
 		get_pcvar_string(gg_endmap_setup,setup,511);
-
 		server_cmd(setup);
-		server_exec();
 	}
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
@@ -560,7 +560,7 @@ public client_authorized(id)
 		new i, save = -1;
 
 		// find our possible temp save
-		for(i=0;i<32;i++)
+		for(i=0;i<TEMP_SAVES;i++)
 		{
 			if(equal(authid,tempSave[i],23))
 			{
@@ -577,8 +577,7 @@ public client_authorized(id)
 		score[id] = tempSave[save][25];
 
 		// clear it
-		remove_task(TASK_CLEAR_SAVE+save);
-		tempSave[save][0] = 0;
+		clear_save(TASK_CLEAR_SAVE+save);
 
 		// get the name (almost forgot!)
 		get_weapon_name_by_level(level[id],weapon[id],23);
@@ -600,38 +599,42 @@ public client_disconnect(id)
 	// clear bomb planter
 	if(c4planter == id) c4planter = 0;
 
-	new save_temp = get_pcvar_num(gg_save_temp);
-
-	// temporarily save values
-	if(get_pcvar_num(gg_enabled) && save_temp && (level[id] > 1 || score[id] > 0))
+	// don't bother saving if in winning period
+	if(!won)
 	{
-		new freeSave = -1, oldestSave = -1, i;
+		new save_temp = get_pcvar_num(gg_save_temp);
 
-		for(i=0;i<32;i++)
+		// temporarily save values
+		if(get_pcvar_num(gg_enabled) && save_temp && (level[id] > 1 || score[id] > 0))
 		{
-			// we found a free one
-			if(!tempSave[i][0])
+			new freeSave = -1, oldestSave = -1, i;
+
+			for(i=0;i<TEMP_SAVES;i++)
 			{
-				freeSave = i;
-				break;
+				// we found a free one
+				if(!tempSave[i][0])
+				{
+					freeSave = i;
+					break;
+				}
+
+				// keep track of one soonest to expire
+				if(oldestSave == -1 || tempSave[i][26] < tempSave[oldestSave][26])
+					oldestSave = i;
 			}
 
-			// keep track of one soonest to expire
-			if(oldestSave == -1 || tempSave[i][26] < tempSave[oldestSave][26])
-				oldestSave = i;
+			// no free, use oldest
+			if(freeSave == -1) freeSave = oldestSave;
+
+			if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,tempSave[freeSave],23);
+			else get_user_authid(id,tempSave[freeSave],23);
+
+			tempSave[freeSave][24] = level[id];
+			tempSave[freeSave][25] = score[id];
+			tempSave[freeSave][26] = floatround(get_gametime());
+
+			set_task(float(save_temp),"clear_save",TASK_CLEAR_SAVE+freeSave);
 		}
-
-		// no free, use oldest
-		if(freeSave == -1) freeSave = oldestSave;
-
-		if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,tempSave[freeSave],23);
-		else get_user_authid(id,tempSave[freeSave],23);
-
-		tempSave[freeSave][24] = level[id];
-		tempSave[freeSave][25] = score[id];
-		tempSave[freeSave][26] = floatround(get_gametime());
-
-		set_task(float(save_temp),"clear_save",TASK_CLEAR_SAVE+freeSave);
 	}
 
 	clear_values(id);
@@ -640,6 +643,7 @@ public client_disconnect(id)
 // remove a save
 public clear_save(taskid)
 {
+	remove_task(taskid);
 	tempSave[taskid-TASK_CLEAR_SAVE][0] = 0;
 }
 
@@ -735,7 +739,7 @@ public fw_setmodel(ent,model[])
 public fw_touch(touched,toucher)
 {
 	// invalid entities involved or gungame disabled
-	if(!pev_valid(touched) || !is_user_connected(toucher) || !get_pcvar_num(gg_enabled))
+	if(!get_pcvar_num(gg_enabled) || !pev_valid(touched) || !is_user_connected(toucher))
 		return FMRES_IGNORED;
 
 	static classname[10];
@@ -772,7 +776,7 @@ public fw_touch(touched,toucher)
 
 	// we are allowed to pick up other weapons
 	if(get_pcvar_num(gg_pickup_others))
-		return FMRES_IGNORED; 
+		return FMRES_IGNORED;
 
 	// weapon is weapon_mp5navy, but model is w_mp5.mdl
 	// checks for models/w_mp5.mdl
@@ -781,8 +785,8 @@ public fw_touch(touched,toucher)
 	// get the type of weapon based on model
 	else
 	{
-		replace(model,31,"models/w_","");
-		replace(model,31,".mdl","");
+		replace(model,23,"models/w_","");
+		replace(model,23,".mdl","");
 	}
 
 	// everyone is allowed to use knife
@@ -808,7 +812,7 @@ public fw_touch(touched,toucher)
 // HELLO HELLo HELlo HEllo Hello hello
 public fw_emitsound(ent,channel,sample[],Float:volume,Float:atten,flags,pitch)
 {
-	if(!is_user_connected(ent) || !get_pcvar_num(gg_enabled) || !get_pcvar_num(gg_dm) || spawnSounds[ent])
+	if(!get_pcvar_num(gg_enabled) || !is_user_connected(ent) || !get_pcvar_num(gg_dm) || spawnSounds[ent])
 		return FMRES_IGNORED;
 
 	return FMRES_SUPERCEDE;
@@ -1764,6 +1768,7 @@ public cmd_gungame(id,level,cid)
 
 	set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+newStatus);
 	set_cvar_num("sv_restartround",5);
+	if(!newStatus) set_pcvar_num(gg_enabled,0);
 
 	console_print(id,"[GunGame] Turned GunGame %s",(newStatus) ? "on" : "off");
 
@@ -1990,10 +1995,10 @@ public check_joinclass(id)
 // toggle the status of gungame
 public toggle_gungame(taskid)
 {
-	new status = taskid-TASK_TOGGLE_GUNGAME;
+	new status = taskid-TASK_TOGGLE_GUNGAME, i;
 
-	new i;
-	for(i=0;i<33;i++)
+	// clear player tasks and values
+	for(i=1;i<=32;i++)
 	{
 		remove_task(TASK_RESPAWN+i);
 		remove_task(TASK_CHECK_RESPAWN+i);
@@ -2001,7 +2006,11 @@ public toggle_gungame(taskid)
 		remove_task(TASK_CHECK_DEATHMATCH+i);
 		remove_task(TASK_REMOVE_PROTECTION+i);
 		clear_values(i);
+
 	}
+
+	// clear temp saves
+	for(i=0;i<TEMP_SAVES;i++) clear_save(TASK_CLEAR_SAVE+i);
 
 	if(status == TOGGLE_FORCE || status == TOGGLE_ENABLE)
 	{
@@ -2037,11 +2046,7 @@ public toggle_gungame(taskid)
 					continue;
 
 				trim(command);
-				if(command[0])
-				{
-					server_cmd(command);
-					server_exec();
-				}
+				if(command[0]) server_cmd(command);
 			}
 			if(file) fclose(file);
 		}
@@ -2052,6 +2057,9 @@ public toggle_gungame(taskid)
 
 	// run appropiate cvars
 	map_start_cvars();
+
+	// execute all of those cvars that we just set
+	server_exec();
 
 	// reset some things
 	if(!get_pcvar_num(gg_enabled))
@@ -2083,14 +2091,12 @@ public map_start_cvars()
 	{
 		get_pcvar_string(gg_endmap_setup,setup,511);
 		server_cmd(setup);
-		server_exec();
 	}
 	else
 	{
 		// run map setup
 		get_pcvar_string(gg_map_setup,setup,511);
 		server_cmd(setup);
-		server_exec();
 
 		// warmup is -13 after its finished, this stops multiple warmups for multiple map iterations
 		new warmup_value = get_pcvar_num(gg_warmup_timer_setting);
@@ -2827,9 +2833,17 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0)
 		if(warmup > 0)
 		{
 			change_level(id,-value,just_joined);
+
 			client_print(id,print_chat,"%L",id,"SLOW_DOWN");
 			client_print(id,print_center,"%L",id,"SLOW_DOWN");
 
+			return;
+		}
+
+		// bot, and not allowed to win
+		if(is_user_bot(id) && get_pcvar_num(gg_ignore_bots) == 2 && !only_bots())
+		{
+			change_level(id,-value,just_joined);
 			return;
 		}
 
@@ -3559,11 +3573,11 @@ win(id)
 	{
 		client_cmd(0,"+showscores");
 
-		set_task(4.9,"restart_gungame",get_cvar_num("bot_stop"));
+		set_task(4.9,"restart_gungame",czero ? get_cvar_num("bot_stop") : 0);
 		set_task(10.0,"stop_win_sound");
 
 		set_cvar_num("sv_restartround",5);
-		set_cvar_num("bot_stop",1); // freeze CZ bots
+		if(czero) set_cvar_num("bot_stop",1); // freeze CZ bots
 	}
 
 	new players[32], num, i;
@@ -3588,7 +3602,8 @@ win(id)
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
 
-	new stats_mode = get_pcvar_num(gg_stats_mode), stats_ip = get_pcvar_num(gg_stats_ip);
+	new stats_mode = get_pcvar_num(gg_stats_mode), stats_ip = get_pcvar_num(gg_stats_ip),
+	ignore_bots = get_pcvar_num(gg_ignore_bots);
 
 	// points system
 	if(sfFile[0] && stats_mode == 2)
@@ -3598,6 +3613,22 @@ win(id)
 		for(i=0;i<num;i++)
 		{
 			player = players[i];
+
+			// log it
+			get_user_name(player,myName,31);
+
+			if(stats_ip) get_user_ip(player,authid,23);
+			else get_user_authid(player,authid,23);
+
+			get_user_team(player,team,9);
+			log_message("^"%s<%i><%s><%s>^" triggered ^"GunGame_Points^" amount ^"%i^"",myName,get_user_userid(player),authid,team,iPoints);
+
+			// display it
+			gungame_print(player,0,"%L",player,"GAINED_POINTS",iPoints,totalPoints);
+
+			// don't count bots
+			if(ignore_bots && is_user_bot(player))
+				continue;
 
 			// calculate points and add
 			flPoints = float(level[player]) - 1.0;
@@ -3615,23 +3646,12 @@ win(id)
 
 			iPoints = floatround(flPoints);
 			stats_add_to_score(player,wins,iPoints,dummy[0],totalPoints);
-
-			// log it
-			get_user_name(player,myName,31);
-
-			if(stats_ip) get_user_ip(player,authid,23);
-			else get_user_authid(player,authid,23);
-
-			get_user_team(player,team,9);
-			log_message("^"%s<%i><%s><%s>^" triggered ^"GunGame_Points^" amount ^"%i^"",myName,get_user_userid(player),authid,team,iPoints);
-
-			// display it
-			gungame_print(player,0,"%L",player,"GAINED_POINTS",iPoints,totalPoints);
 		}
 	}
 
 	// regular wins, no points
-	else if(sfFile[0] && stats_mode) stats_add_to_score(id,1,0,dummy[0],dummy[0]);
+	else if(sfFile[0] && stats_mode && (!ignore_bots || !is_user_bot(id)))
+		stats_add_to_score(id,1,0,dummy[0],dummy[0]);
 
 	if(stats_ip) get_user_ip(id,authid,23);
 	else get_user_authid(id,authid,23);
@@ -3664,7 +3684,7 @@ public restart_gungame(old_bot_stop_value)
 		fm_set_user_godmode(players[i],0);
 		welcomed[players[i]] = 1; // also don't show welcome again
 	}
-	if(cvar_exists("bot_stop")) set_cvar_num("bot_stop",old_bot_stop_value); // unfreeze CZ bots?
+	if(czero) set_cvar_num("bot_stop",old_bot_stop_value); // unfreeze CZ bots
 
 	// only have warmup once?
 	if(!get_pcvar_num(gg_warmup_multi)) warmup = -13; // -13 is the magical stop number
@@ -3735,6 +3755,7 @@ public autovote_result()
 	{
 		set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_DISABLE);
 		set_cvar_num("sv_restartround",5);
+		set_pcvar_num(gg_enabled,0);
 	}
 
 	// reset votes
@@ -3808,11 +3829,12 @@ stock stats_get_data(authid[],&wins,&points,lastName[],nameLen,&timestamp,knownL
 	while(!feof(file))
 	{
 		fgets(file,sfLineData,80);
+		line++;
 
 		// go to the line we know
 		if(knownLine > -1)
 		{
-			if(line++ == knownLine)
+			if(line-1 == knownLine)
 			{
 				found = 1;
 				break;
@@ -3987,13 +4009,12 @@ stats_get_top_players(amount,storage[][],storageLen)
 	new count, stats_mode = get_pcvar_num(gg_stats_mode), score[10];
 
 	// open sesame
-	new line, file = fopen(sfFile,"rt");
+	new file = fopen(sfFile,"rt");
 	if(!file) return 0;
 
 	// reading, reading, reading...
 	while(!feof(file))
 	{
-		line++;
 		fgets(file,sfLineData,80);
 
 		// empty line
@@ -4597,6 +4618,7 @@ public goto_nextmap()
 	// otherwise, go to amx_nextmap
 	new nextMap[32];
 	get_cvar_string("amx_nextmap",nextMap,31);
+
 	server_cmd("changelevel %s",nextMap);
 }
 
@@ -4886,4 +4908,18 @@ can_score(id)
 
 	// didn't find anyone on opposing team
 	return 0;
+}
+
+// returns 1 if there are only bots in the server, 0 if not
+only_bots()
+{
+	new i;
+	for(i=1;i<=maxPlayers;i++)
+	{
+		if(is_user_connected(i) && !is_user_bot(i))
+			return 0;
+	}
+
+	// didn't find any humans
+	return 1;
 }

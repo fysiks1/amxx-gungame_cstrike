@@ -737,7 +737,7 @@ NONE = ingen
 NO_WIN_LOGGING = Denna server har vunnit inloggning nekad
 NOW_ON_LEVEL = Du 'a'r nu i niva
 ON_LEVEL = Du 'a'r i niva
-PLAY_GUNGAME = Play GunGame?
+PLAY_GUNGAME = Spela GunGame?
 PLAYER_RESET = %%n%s%%e restartade sig sj'a'lv till niva %%g1%%e
 POINTS = po'a'ng
 PRESS_KEY_TO_CONTINUE = Tryck in en seriekod f'o'r att forts'a'tta
@@ -826,7 +826,7 @@ NONE = ei mit'a'a'n
 NO_WIN_LOGGING = Voittojen logaus ei ole k'a'ytoss'a' t'a'll'a' servulla
 NOW_ON_LEVEL = Olet nyt tasolla
 ON_LEVEL = Olet tasolla
-PLAY_GUNGAME = Play GunGame?
+PLAY_GUNGAME = Pelaa GunGame?
 PLAYER_RESET = %%n%s%%e resetoi itsens'a' takaisin tasolle %%g1%%e
 POINTS = pistett'a'
 PRESS_KEY_TO_CONTINUE = Paina jotain numeron'a'pp'a'int'a' jatkaaksesi
@@ -1247,3 +1247,92 @@ Wpisz !score by otrzymac punktacje graczy i wygrane w konsoli^n
 :
 WINS = zwyciestw
 WON = zwyciezyl
+
+[sr]
+CANCEL = Prekini
+CLOSE = Zatvori
+FRIENDLYFIRE_ON = %%gFriendly Fire je Ukljucen!!!%%e Pazi gde pucas!
+GAINED_POINTS = Upravo si dobio %%g%i%%e poena (%%g%i%%e total)!
+GUNGAME = GunGame
+HK_LEVEL_DOWN = %%n%s%%e se spustio na nivo %%g%i%%e jer je ubio taoca
+HK_SCORE_DOWN = %%n%s%%e je izgubio %%g%i%%e poena jer je ubio taoca
+KNIVES_ONLY = SAMO NOZEVI
+LEADING_ON_LEVEL = %%n%s%%e vodi i ima nivo %%g%i%%e :: %%g%s%%e
+LEVEL = Level
+LEVEL_MESSAGE_LINE1 = Imas %i/%i potrebnih ubistava
+LEVEL_MESSAGE_LINE2A = Vodish, imas najvishi nivo!
+LEVEL_MESSAGE_LINE2B = Izjednacen si za prvo mesto
+LEVEL_MESSAGE_LINE2C = %i si nivoa iza vodeceg igraca
+LEVEL_MESSAGE_LINE3A = Dobio si %i puta
+LEVEL_MESSAGE_LINE3B = Sakupio si %i poena
+LEVEL_MESSAGE_LINE4A = Trenutno vode: %s
+LEVEL_MESSAGE_LINE4B = Trenutno vodi: %s
+LEVEL_MESSAGE_LINE5 = Vodeci igrac ima nivo: %i (%s)
+LEVELS_BEHIND_LEADER = Sada si %%g%i%%e nivoa iza vodeceg igraca
+NEXT = Sledeca
+NONE = Nista
+NO_WIN_LOGGING = Server ima ukljuceno logovanje pobeda
+NOW_ON_LEVEL = Sada si na nivou
+ON_LEVEL = Sada si na nivou
+PLAY_GUNGAME = Da igramo GunGame?
+PLAYER_RESET = %%n%s%%e se resetovao nazad na nivo %%g1%%e
+POINTS = poena
+PRESS_KEY_TO_CONTINUE = Pritisni bilo koji broj da nastavis
+PREVIOUS = Prosli
+PROGRESS_DISPLAY = Treba ti %%n%i%%e ubistava da napredujes. Score: %%n%i / %i%%e
+PRUNING = Cistim %s: %i stavki ocisceno
+REQUIRED_KILLS = Potrebno ubistava
+RESET_QUERY = Da li si siguran da zelis da se ^nresetujes nazad na nivo 1?
+RESPAWN_COUNTDOWN = Respawnovaces se za %i sekundi
+RULES = Rules
+RULES_CONSOLE_LINE1 = %i) Moras napraviti 3 ubistva sa trenutnim oruzjem, da bi napredovao na sledeci nivo.
+RULES_CONSOLE_LINE2 = %i) Ako napravis ubistvo sa oruzjem koje nije tvoj nivo, ne racuna se za napredovanje.
+RULES_CONSOLE_LINE3 = %i) Mozes napredovati nivo ako PUKNE C4 ili ako ga DEFUZIRAS.
+RULES_CONSOLE_LINE4 = %i) Ako uradis samoubistvo, gubis nivo.
+RULES_CONSOLE_LINE5 = %i) Friendly Fire se ukljucuje ako neko dostigne GRENADE nivo.
+RULES_CONSOLE_LINE6A = %i) Mozes napredovati vise nivoa po rundi.
+RULES_CONSOLE_LINE6B = %i) Mozes napredovati samo 1 nivo po rundi.
+RULES_CONSOLE_LINE6C = %i) Mozes napredovati max %i nivoa po rundi.
+RULES_CONSOLE_LINE7 = %i) Postoji grace period na kraju runde koji dozvoljava igracima da zamenu tim.
+RULES_CONSOLE_LINE8 = %i) Posto je Knife Pro ukljucen, mozes ukrasti nivo igracu ako ga zakoljes.
+RULES_CONSOLE_LINE9 = %i) Posto je Turbo Mode ukljucen, dobijas novo oruzje cim napredujes nivo.
+RULES_CONSOLE_LINE10 = %i) Posto je Deathmatch Mode ukljucen, respawnujes se neprestano.
+RULES_CONSOLE_LINE11 = Say !level da vidis svoj trenutni nivo i ko vodi.
+RULES_CONSOLE_LINE12 = Say !weapons da vidis redosled oruzja(nivoa).
+RULES_CONSOLE_LINE13 = Say !score da vidis rezultate svih igraca.
+RULES_CONSOLE_LINE14 = Say !top10 da vidis 10 naj pobednika na serveru.
+RULES_CONSOLE_LINE15 = Say !restart da se restartujes na nivo 1.
+RULES_MESSAGE_LINE1 = Pravila igre i say komande su ti izlistane u konzoli
+RULES_MESSAGE_LINE2 = Neke korisne say komande:
+RULES_MESSAGE_LINE3 :
+Say !top10 da vidis 10 naj pobednika na serveru^n
+Say !level da vidis svoj trenutni nivo i ko vodi^n
+Say !weapons da vidis redosled oruzja(nivoa)^n
+Say !score da vidis rezultate svih igraca^n
+:
+SCORES = Rezultati
+SLOW_DOWN = Uspori! Ovo je i dalje warmup runda!
+SPAWNPROTECTED_KILL = Tvoje ubistvo se ne racuna jer se %%n%s%%e spawnovao zadnjih %%g%i%%e sekundi
+STILL_LEVEL_ONE = Nisi jos prosao ni nivo 1!
+STOLE_LEVEL = %%n%s%%e je ukrao nivo od %%g%s%%e
+SUICIDE_LEVEL_DOWN = %%n%s%%e je izgubio nivo zbog samoubistva
+TIED_LEADER = %%n%s%%e je izjednacen sa vodecim igracem!
+TK_LEVEL_DOWN = %%n%s%%e se spustio na nivo %%g%i%%e jer je ubio saugraca
+TK_SCORE_DOWN = %%n%s%%e je izgubio %%g%i%%e poena za ubistvo saigraca
+TOP_10 = Top 10
+TRIPLE_LEVELED = %%n%s%%e je trostruko napredovao!!!
+WARMUP_ROUND = GunGame Warmup runda
+WARMUP_ROUND_OVER = GunGame Warmup Runda Zavrsena!
+WARMUP_ROUND_DISPLAY = Warmup Runda: %i jos sekundi
+WEAPONS = Oruzja
+WELCOME_MESSAGE_LINE1 = Ovaj server koristi GunGame %s by Avalanche
+WELCOME_MESSAGE_LINE2 = Knife Pro je \rUKLJUCEN!\w
+WELCOME_MESSAGE_LINE3 = Turbo Mode je \rUKLJUCEN!\w
+WELCOME_MESSAGE_LINE4 = Deathmatch Mode je \rUKLJUCEN!\w
+WELCOME_MESSAGE_LINE5 :
+Say !rules za instrukcije kako se igra GunGame i spisak komandi^n
+Say !level da vidis svoj trenutni nivo i ko vodi^n
+Say !score da u konzoli dobijes rezultate svih igraca i pobeda^n
+:
+WINS = pobedjuje
+WON = je pobedio

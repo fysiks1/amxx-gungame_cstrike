@@ -11,14 +11,15 @@
 // CSDM spawn files that I could leech off of.
 //
 // Thanks a lot to all of my supporters, predominantly:
-// 3volution, aligind4h0us3, arkshine, Gunny, Mordekay,
-// raa, and SilverDragon. (alphabetically)
+// 3volution, aligind4h0us3, arkshine, Curryking, Gunny,
+// IdiotSavant, Mordekay, polakpolak, raa, Silver Dragon,
+// and ToT | V!PER. (alphabetically)
 //
 // Thanks especially to all of the translators:
 // arkshine, b!orn, commonbullet, Curryking, D o o m,
 // Doombringer, Fr3ak0ut, godlike, harbu, jopmako,
-// KylixMynxAltoLAG, TEG, ToT | V!PER, Twilight Suzuka,
-// and webpsiho. (alphabetically)
+// KylixMynxAltoLAG, Morpheus759, SAMURAI16, TEG,
+// ToT | V!PER, Twilight Suzuka, and webpsiho. (alphabetically)
 
 #include <amxmodx>
 #include <amxmisc>
@@ -27,8 +28,9 @@
 #include <cstrike>
 
 // defines
-#define GG_VERSION		"1.15"
-#define MAX_SPAWNS		60 // for gg_dm_spawn_random
+#define GG_VERSION		"1.16"
+#define TOP_PLAYERS		10 // for !top10
+#define MAX_SPAWNS		128 // for gg_dm_spawn_random
 #define COMMAND_ACCESS		ADMIN_CVAR // for amx_gungame
 #define LANG_PLAYER_C		-76 // for gungame_print
 #define MAX_WEAPON_ORDERS	10 // for random gg_weapon_order
@@ -40,15 +42,15 @@ enum
 	STATUS_YOURWPN,
 	STATUS_KILLSLEFT,
 	STATUS_KILLSDONE
-}
+};
 
 // toggle_gungame
 enum
 {
 	TOGGLE_FORCE = -1,
-	TOGGLE_DISABLE = 0,
+	TOGGLE_DISABLE,
 	TOGGLE_ENABLE
-}
+};
 
 // bombStatus[3]
 enum
@@ -56,7 +58,7 @@ enum
 	BOMB_PICKEDUP = -1,
 	BOMB_DROPPED,
 	BOMB_PLANTED
-}
+};
 
 // cs_set_user_money
 #if cellbits == 32
@@ -77,6 +79,7 @@ enum
 #define TASK_TOGGLE_GUNGAME	800
 #define TASK_WARMUP_CHECK	900
 #define TASK_VERIFY_WEAPON	1000
+#define TASK_DELAYED_SUICIDE	1100
 
 // hud channels
 #define CHANNEL_STATUS		3
@@ -104,14 +107,16 @@ gg_refill_on_kill, gg_colored_messages, gg_tk_penalty, gg_dm_corpses, gg_save_te
 gg_awp_oneshot, gg_host_touch_reward, gg_host_rescue_reward, gg_host_kill_reward,
 gg_dm_countdown, gg_status_display, gg_dm_spawn_afterplant, gg_block_objectives,
 gg_stats_mode, gg_pickup_others, gg_stats_winbonus, gg_map_iterations, gg_warmup_multi,
-gg_host_kill_penalty, gg_dm_start_random, gg_stats_ip;
+gg_host_kill_penalty, gg_dm_start_random, gg_stats_ip, gg_extra_nades, gg_endmap_setup,
+gg_allow_changeteam, gg_autovote_rounds, gg_autovote_ratio, gg_autovote_delay,
+gg_autovote_time;
 
 // max clip
-new const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25, 30, 35, 25,  12,  20,
+stock const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25, 30, 35, 25,  12,  20,
 			10,  30, 100,  8, 30,  30, 20,  2,  7, 30, 30, -1,  50 };
 
 // max bpammo
-new const maxAmmo[31] = { -1, 52, -1, 90, -1, 32, -1, 100, 90, -1, 120, 100, 100, 90, 90, 90, 100, 100,
+stock const maxAmmo[31] = { -1, 52, -1, 90, -1, 32, -1, 100, 90, -1, 120, 100, 100, 90, 90, 90, 100, 100,
 			30, 120, 200, 32, 90, 120, 60, -1, 35, 90, 90, -1, 100 };
 
 // weapon slot lookup table
@@ -122,7 +127,8 @@ stock const weaponSlots[] = { 0, 2, 0, 1, 4, 1, 5, 1, 1, 4, 2, 2, 1, 1, 1, 1, 2,
 new scores_menu, level_menu, bombMap, hostageMap, warmup = -1, len, voted, won, trailSpr, roundEnded,
 weaponOrder[416], menuText[512], dummy[2], tempSave[32][27], c4planter, czero, bombStatus[4], maxPlayers,
 gameStarted, mapIteration = 1, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, cfgDir[32],
-top10[10][81];
+top10[TOP_PLAYERS][81], csrespawnEnabled, modName[12], autovoted, autovotes[2], roundsElapsed,
+gameCommenced;
 
 // stats file stuff
 new sfFile[64], sfAuthid[24], sfWins[6], sfPoints[8], sfName[32], sfTimestamp[12], sfLineData[81];
@@ -133,11 +139,13 @@ new gmsgSayText, gmsgCurWeapon, gmsgScenario, gmsgBombDrop, gmsgBombPickup, gmsg
 // player values
 new level[33], levelsThisRound[33], score[33], weapon[33][24], star[33], welcomed[33],
 spawnProtected[33], blockResetHUD[33], page[33], blockCorpse[33], Float:lastDeathMsg[33], hosties[33][2],
-respawn_timeleft[33], Float:spawnTime[33], silenced[33];
+respawn_timeleft[33], Float:spawnTime[33], silenced[33], spawnSounds[33], oldTeam[33];
 
 //
 // INITIATION FUNCTIONS
 //
+
+native cs_respawn(index);
 
 // plugin load
 public plugin_init()
@@ -148,6 +156,8 @@ public plugin_init()
 
 	// mehrsprachige unterst�tzung (nein, spreche ich nicht Deutsches)
 	register_dictionary("gungame.txt");
+	register_dictionary("common.txt");
+	register_dictionary("adminvote.txt");
 
 	// event ids
 	gmsgSayText = get_user_msgid("SayText");
@@ -161,6 +171,7 @@ public plugin_init()
 	// forwards
 	register_forward(FM_SetModel,"fw_setmodel");
 	register_forward(FM_Touch,"fw_touch");
+	register_forward(FM_EmitSound,"fw_emitsound");
 
 	// events
 	register_event("DeathMsg","event_deathmsg","a");
@@ -188,9 +199,12 @@ public plugin_init()
 	register_logevent("logevent_hostage_touched",3,"2=Touched_A_Hostage");
 	register_logevent("logevent_hostage_rescued",3,"2=Rescued_A_Hostage");
 	register_logevent("logevent_hostage_killed",3,"2=Killed_A_Hostage");
+	register_logevent("logevent_team_join",3,"1=joined team");
 
 	// commands
-	register_concmd("amx_gungame","cmd_gungame",COMMAND_ACCESS,"<0|1|off|on> - toggles the functionality of GunGame");
+	register_concmd("amx_gungame","cmd_gungame",ADMIN_CVAR,"<0|1> - toggles the functionality of GunGame");
+	register_concmd("amx_gungame_level","cmd_gungame_level",ADMIN_BAN,"<target> <level> - sets target's level. use + or - for relative, otherwise it's absolute.");
+	register_concmd("amx_gungame_vote","cmd_gungame_vote",ADMIN_VOTE,"- starts a vote to toggle GunGame");
 	register_clcmd("fullupdate","cmd_fullupdate");
 	register_clcmd("joinclass","cmd_joinclass"); // new menus
 	register_menucmd(register_menuid("Terrorist_Select",1),511,"cmd_joinclass"); // old menus (thanks teame06)
@@ -199,6 +213,7 @@ public plugin_init()
 	register_clcmd("say_team","cmd_say");
 
 	// menus
+	register_menucmd(register_menuid("autovote_menu"),MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,"autovote_menu_handler");
 	register_menucmd(register_menuid("welcome_menu"),1023,"welcome_menu_handler");
 	register_menucmd(register_menuid("restart_menu"),MENU_KEY_1|MENU_KEY_0,"restart_menu_handler");
 	register_menucmd(register_menuid("weapons_menu"),MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,"weapons_menu_handler");
@@ -214,28 +229,44 @@ public plugin_init()
 	gg_vote_custom = register_cvar("gg_vote_custom","");
 	gg_changelevel_custom = register_cvar("gg_changelevel_custom","");
 	gg_map_setup = register_cvar("gg_map_setup","mp_timelimit 45; mp_winlimit 0; sv_alltalk 0; mp_chattime 10; mp_c4timer 25");
+	gg_endmap_setup = register_cvar("gg_endmap_setup","exec server.cfg");
 	gg_join_msg = register_cvar("gg_join_msg","1");
-	gg_stats_file = register_cvar("gg_stats_file","gungame.stats");
-	gg_stats_ip = register_cvar("gg_stats_ip","0");
-	gg_stats_mode = register_cvar("gg_stats_mode","1");
-	gg_stats_prune = register_cvar("gg_stats_prune","2592000"); // = 60 * 60 * 24 * 30 = 30 days
-	gg_stats_winbonus = register_cvar("gg_stats_winbonus","1.5");
 	gg_colored_messages = register_cvar("gg_colored_messages","1");
 	gg_save_temp = register_cvar("gg_save_temp","300"); // = 5 * 60 = 5 minutes
 	gg_status_display = register_cvar("gg_status_display","0");
-	gg_block_objectives = register_cvar("gg_block_objectives","0");
 	gg_map_iterations = register_cvar("gg_map_iterations","1");
 
-	// deathmatch
-	gg_dm = register_cvar("gg_dm","0"); // deathmatch mode on or off
-	gg_dm_sp_time = register_cvar("gg_dm_sp_time","1.0"); // time (in seconds) after spawn for spawn protection
-	gg_dm_sp_mode = register_cvar("gg_dm_sp_mode","1"); // 1: if killed during SP, killer gets no points; 2: invincible during SP
-	gg_dm_spawn_random = register_cvar("gg_dm_spawn_random","0"); // if 1, you will respawn in a random (team-ambiguous) spawn
-	gg_dm_start_random = register_cvar("gg_dm_start_random","1");
-	gg_dm_spawn_delay = register_cvar("gg_dm_spawn_delay","1.5"); // time (in seconds) it takes to respawn after dying
+	// autovote cvars
+	gg_autovote_rounds = register_cvar("gg_autovote_rounds","0");
+	gg_autovote_delay = register_cvar("gg_autovote_delay","8.0");
+	gg_autovote_ratio = register_cvar("gg_autovote_ratio","0.51");
+	gg_autovote_time = register_cvar("gg_autovote_time","10.0");
+
+	// stats cvars
+	gg_stats_file = register_cvar("gg_stats_file","gungame.stats");
+	gg_stats_ip = register_cvar("gg_stats_ip","0");
+	gg_stats_prune = register_cvar("gg_stats_prune","2592000"); // = 60 * 60 * 24 * 30 = 30 days
+	gg_stats_mode = register_cvar("gg_stats_mode","1");
+	gg_stats_winbonus = register_cvar("gg_stats_winbonus","1.5");
+
+	// deathmatch cvars
+	gg_dm = register_cvar("gg_dm","0");
+	gg_dm_sp_time = register_cvar("gg_dm_sp_time","1.0");
+	gg_dm_sp_mode = register_cvar("gg_dm_sp_mode","1");
+	gg_dm_spawn_random = register_cvar("gg_dm_spawn_random","0");
+	gg_dm_start_random = register_cvar("gg_dm_start_random","0");
+	gg_dm_spawn_delay = register_cvar("gg_dm_spawn_delay","1.5");
 	gg_dm_spawn_afterplant = register_cvar("gg_dm_spawn_afterplant","1");
-	gg_dm_corpses = register_cvar("gg_dm_corpses","1"); // corpses in deathamtch mode?
-	gg_dm_countdown = register_cvar("gg_dm_countdown","0"); // 1 = print_center, 2 = hud message, 3 = both
+	gg_dm_corpses = register_cvar("gg_dm_corpses","1");
+	gg_dm_countdown = register_cvar("gg_dm_countdown","0");
+
+	// objective cvars
+	gg_block_objectives = register_cvar("gg_block_objectives","0");
+	gg_bomb_defuse_lvl = register_cvar("gg_bomb_defuse_lvl","1");
+	gg_host_touch_reward = register_cvar("gg_host_touch_reward","0");
+	gg_host_rescue_reward = register_cvar("gg_host_rescue_reward","0");
+	gg_host_kill_reward = register_cvar("gg_host_kill_reward","0");
+	gg_host_kill_penalty = register_cvar("gg_host_kill_penalty","0");
 
 	// gameplay cvars
 	gg_ff_auto = register_cvar("gg_ff_auto","1");
@@ -245,12 +276,8 @@ public plugin_init()
 	gg_turbo = register_cvar("gg_turbo","0");
 	gg_knife_pro = register_cvar("gg_knife_pro","0");
 	gg_worldspawn_suicide = register_cvar("gg_worldspawn_suicide","1");
+	gg_allow_changeteam = register_cvar("gg_allow_changeteam","0");
 	gg_pickup_others = register_cvar("gg_pickup_others","0");
-	gg_bomb_defuse_lvl = register_cvar("gg_bomb_defuse_lvl","1");
-	gg_host_touch_reward = register_cvar("gg_host_touch_reward","0");
-	gg_host_rescue_reward = register_cvar("gg_host_rescue_reward","0");
-	gg_host_kill_reward = register_cvar("gg_host_kill_reward","0");
-	gg_host_kill_penalty = register_cvar("gg_host_kill_penalty","0");
 	gg_handicap_on = register_cvar("gg_handicap_on","1");
 	gg_top10_handicap = register_cvar("gg_top10_handicap","1");
 	gg_warmup_timer_setting = register_cvar("gg_warmup_timer_setting","60");
@@ -259,6 +286,7 @@ public plugin_init()
 	gg_nade_glock = register_cvar("gg_nade_glock","0");
 	gg_nade_smoke = register_cvar("gg_nade_smoke","0");
 	gg_nade_flash = register_cvar("gg_nade_flash","0");
+	gg_extra_nades = register_cvar("gg_extra_nades","0");
 	gg_kills_per_lvl = register_cvar("gg_kills_per_lvl","1");
 	gg_give_armor = register_cvar("gg_give_armor","100");
 	gg_give_helmet = register_cvar("gg_give_helmet","1");
@@ -267,15 +295,7 @@ public plugin_init()
 	gg_tk_penalty = register_cvar("gg_tk_penalty","0");
 	gg_awp_oneshot = register_cvar("gg_awp_oneshot","1");
 
-	// random weapon orders
-	new i, cvar[20];
-	for(i=1;i<=MAX_WEAPON_ORDERS;i++)
-	{
-		formatex(cvar,19,"gg_weapon_order%i",i);
-		register_cvar(cvar,"");
-	}
-
-	// sound cvars -- DO NOT CHANGE DURING GAMEPLAY
+	// sound cvars
 	gg_sound_levelup = register_cvar("gg_sound_levelup","gungame/smb3_powerup.wav");
 	gg_sound_leveldown = register_cvar("gg_sound_leveldown","gungame/smb3_powerdown.wav");
 	gg_sound_nade = register_cvar("gg_sound_nade","gungame/nade_level.wav");
@@ -283,6 +303,20 @@ public plugin_init()
 	gg_sound_welcome = register_cvar("gg_sound_welcome","gungame/gungame2.wav");
 	gg_sound_triple = register_cvar("gg_sound_triple","gungame/smb_star.wav");
 	gg_sound_winner = register_cvar("gg_sound_winner","media/Half-Life08.mp3");
+
+	// random weapon order cvars
+	new i, cvar[20];
+	for(i=1;i<=MAX_WEAPON_ORDERS;i++)
+	{
+		formatex(cvar,19,"gg_weapon_order%i",i);
+		register_cvar(cvar,"");
+	}
+
+	// check for mini respawn module
+	csrespawnEnabled = module_exists("csrespawn");
+
+	// make sure to setup amx_nextmap incase nextmap.amxx isn't running
+	if(!cvar_exists("amx_nextmap")) register_cvar("amx_nextmap","",FCVAR_SERVER|FCVAR_EXTDLL|FCVAR_SPONLY);
 
 	// identify this as a bomb map
 	if(fm_find_ent_by_class(1,"info_bomb_target") || fm_find_ent_by_class(1,"func_bomb_target"))
@@ -292,8 +326,10 @@ public plugin_init()
 	if(fm_find_ent_by_class(1,"hostage_entity"))
 		hostageMap = 1;
 
+	get_modname(modName,11);
+
 	// remember if we are running czero or not
-	if(is_running("czero")) czero = 1;
+	if(equali(modName,"czero")) czero = 1;
 
 	maxPlayers = get_maxplayers();
 
@@ -304,7 +340,7 @@ public plugin_init()
 	formatex(csdmFile,63,"%s/csdm/%s.spawns.cfg",cfgDir,mapName);
 
 	// collect CSDM spawns
-	if(file_exists(csdmFile) && file_size(csdmFile,1) > 1)
+	if(file_exists(csdmFile))
 	{
 		new csdmData[10][6];
 
@@ -316,9 +352,6 @@ public plugin_init()
 			// invalid spawn
 			if(!sfLineData[0] || str_count(sfLineData,' ') < 2)
 				continue;
-
-			spawnCount = ++csdmSpawnCount;
-			if(spawnCount >= MAX_SPAWNS) break;
 
 			// BREAK IT UP!
 			parse(sfLineData,csdmData[0],5,csdmData[1],5,csdmData[2],5,csdmData[3],5,csdmData[4],5,csdmData[5],5,csdmData[6],5,csdmData[7],5,csdmData[8],5,csdmData[9],1);
@@ -337,6 +370,10 @@ public plugin_init()
 			spawns[spawnCount][6] = floatstr(csdmData[6]);
 			spawns[spawnCount][7] = floatstr(csdmData[7]);
 			spawns[spawnCount][8] = floatstr(csdmData[8]);
+
+			spawnCount++;
+			csdmSpawnCount++;
+			if(spawnCount >= MAX_SPAWNS) break;
 		}
 		if(file) fclose(file);
 	}
@@ -347,9 +384,6 @@ public plugin_init()
 		new ent, Float:spawnData[3];
 		while((ent = fm_find_ent_by_class(ent,"info_player_deathmatch")) != 0)
 		{
-			spawnCount++;
-			if(spawnCount >= MAX_SPAWNS) break;
-
 			// origin
 			pev(ent,pev_origin,spawnData);
 			spawns[spawnCount][0] = spawnData[0];
@@ -366,6 +400,9 @@ public plugin_init()
 			spawns[spawnCount][6] = spawnData[0];
 			spawns[spawnCount][7] = spawnData[1];
 			spawns[spawnCount][8] = spawnData[2];
+
+			spawnCount++;
+			if(spawnCount >= MAX_SPAWNS) break;
 		}
 
 		// yeah, I probably should've optimized this
@@ -373,9 +410,6 @@ public plugin_init()
 		ent = 0;
 		while((ent = fm_find_ent_by_class(ent,"info_player_start")) != 0)
 		{
-			spawnCount++;
-			if(spawnCount >= MAX_SPAWNS) break;
-
 			// origin
 			pev(ent,pev_origin,spawnData);
 			spawns[spawnCount][0] = spawnData[0];
@@ -392,17 +426,29 @@ public plugin_init()
 			spawns[spawnCount][6] = spawnData[0];
 			spawns[spawnCount][7] = spawnData[1];
 			spawns[spawnCount][8] = spawnData[2];
+
+			spawnCount++;
+			if(spawnCount >= MAX_SPAWNS) break;
 		}
 	}
 
-	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE)
+	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE);
 }
 
 // plugin ends, prune stats file maybe
 public plugin_end()
 {
+	// run endmap setup on plugin close
+	if(get_pcvar_num(gg_enabled))
+	{
+		new setup[512];
+		get_pcvar_string(gg_endmap_setup,setup,511);
+
+		server_cmd(setup);
+		server_exec();
+	}
+
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled/file doesn't exist/pruning disabled
 	if(!sfFile[0] || !file_exists(sfFile) || !get_pcvar_num(gg_stats_prune)) return;
@@ -433,6 +479,21 @@ public plugin_end()
 	// decrement our count
 	num_to_str(prune_in-1,prune_in_str,2);
 	set_localinfo("gg_prune_in",prune_in_str);
+}
+
+// setup native filter for cs_respawn
+public plugin_natives()
+{
+	set_native_filter("native_filter");
+}
+
+// don't throw error on cs_respawn if not running module
+public native_filter(const name[],index,trap)
+{
+	if(equal(name,"cs_respawn"))
+		return PLUGIN_HANDLED;
+
+	return PLUGIN_CONTINUE;
 }
 
 // manage warmup mode
@@ -484,7 +545,6 @@ public client_authorized(id)
 	clear_values(id);
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	static authid[24];
 
@@ -535,6 +595,7 @@ public client_disconnect(id)
 	remove_task(TASK_CHECK_DEATHMATCH+id);
 	remove_task(TASK_REMOVE_PROTECTION+id);
 	remove_task(TASK_VERIFY_WEAPON+id);
+	remove_task(TASK_DELAYED_SUICIDE+id);
 
 	// clear bomb planter
 	if(c4planter == id) c4planter = 0;
@@ -597,14 +658,15 @@ stock clear_values(id,ignoreWelcome=0)
 	blockCorpse[id] = 0;
 	respawn_timeleft[id] = 0;
 	silenced[id] = 0;
+	spawnSounds[id] = 1;
+	oldTeam[id] = 0;
 }
 
 // an entity is given a model, stop weapons from
 // dropping in DM mode so that it doesn't get clustered
 public fw_setmodel(ent,model[])
 {
-	if(!get_pcvar_num(gg_enabled) || !get_pcvar_num(gg_dm) || get_pcvar_num(gg_pickup_others)
-	|| !pev_valid(ent) || !model[0])
+	if(!get_pcvar_num(gg_enabled) || !pev_valid(ent) || !model[0])
 		return FMRES_IGNORED;
 
 	new owner = pev(ent,pev_owner);
@@ -612,8 +674,8 @@ public fw_setmodel(ent,model[])
 	// no owner
 	if(!is_user_connected(owner)) return FMRES_IGNORED;
 
-	static classname[14];
-	pev(ent,pev_classname,classname,13);
+	static classname[24];
+	pev(ent,pev_classname,classname,10);
 
 	// not a weapon
 	// checks for weaponbox, weapon_shield
@@ -632,7 +694,7 @@ public fw_setmodel(ent,model[])
 	// checks for models/w_backpack.mdl
 	if(len == 21 && model[9] == 'b') return FMRES_IGNORED;
 
-	// if owner is dead, remove weaponbox, and consequently the weapon_* entity
+	// if owner is dead
 	if(get_user_health(owner) <= 0)
 	{
 		// first, remember silenced or burst status
@@ -659,8 +721,11 @@ public fw_setmodel(ent,model[])
 			if(pev_valid(wEnt)) silenced[owner] = cs_get_weapon_burst(wEnt);
 		}
 
-		// remove it
-		dllfunc(DLLFunc_Think,ent);
+		if(get_pcvar_num(gg_dm) && !get_pcvar_num(gg_pickup_others))
+		{
+			// then remove it
+			dllfunc(DLLFunc_Think,ent);
+		}
 	}
 
 	return FMRES_IGNORED;
@@ -683,20 +748,12 @@ public fw_touch(touched,toucher)
 	&& !(classname[0] == 'a' && classname[1] == 'r' && classname[2] == 'm'))
 		return FMRES_IGNORED;
 
-	// knife warmup, no weapons allowed
-	if(warmup > 0 && get_pcvar_num(gg_knife_warmup))
-		return FMRES_SUPERCEDE;
-
 	// removing starting pistols
 	if(fm_halflife_time() - spawnTime[toucher] < 0.2)
 	{
 		dllfunc(DLLFunc_Think,touched);
 		return FMRES_SUPERCEDE;
 	}
-
-	// we are allowed to pick up other weapons
-	if(get_pcvar_num(gg_pickup_others))
-		return FMRES_IGNORED; 
 
 	static model[24];
 	pev(touched,pev_model,model,23);
@@ -708,6 +765,14 @@ public fw_touch(touched,toucher)
 	// allow pickup of C4
 	// checks for models/w_backpack.mdl
 	if(model[9] == 'b') return FMRES_IGNORED;
+
+	// knife warmup, no weapons allowed
+	if(warmup > 0 && get_pcvar_num(gg_knife_warmup))
+		return FMRES_SUPERCEDE;
+
+	// we are allowed to pick up other weapons
+	if(get_pcvar_num(gg_pickup_others))
+		return FMRES_IGNORED; 
 
 	// weapon is weapon_mp5navy, but model is w_mp5.mdl
 	// checks for models/w_mp5.mdl
@@ -737,6 +802,15 @@ public fw_touch(touched,toucher)
 	if(equal(weapon[toucher],model)) return FMRES_IGNORED;
 
 	// otherwise, this is an item we're not allowed to have
+	return FMRES_SUPERCEDE;
+}
+
+// HELLO HELLo HELlo HEllo Hello hello
+public fw_emitsound(ent,channel,sample[],Float:volume,Float:atten,flags,pitch)
+{
+	if(!is_user_connected(ent) || !get_pcvar_num(gg_enabled) || !get_pcvar_num(gg_dm) || spawnSounds[ent])
+		return FMRES_IGNORED;
+
 	return FMRES_SUPERCEDE;
 }
 
@@ -787,7 +861,6 @@ public post_resethud(id)
 			new rcvHandicap = 1;
 
 			get_pcvar_string(gg_stats_file,sfFile,63);
-			trim(sfFile);
 
 			// top10 doesn't receive handicap -- also make sure we are using top10
 			if(!get_pcvar_num(gg_top10_handicap) && sfFile[0] && file_exists(sfFile) && get_pcvar_num(gg_stats_mode))
@@ -798,7 +871,7 @@ public post_resethud(id)
 				else get_user_authid(id,authid,23);
 
 				new i;
-				for(i=0;i<10;i++)
+				for(i=0;i<TOP_PLAYERS;i++)
 				{
 					// blank
 					if(!top10[i][0]) continue;
@@ -887,7 +960,7 @@ public post_resethud(id)
 	}
 
 	// show welcome message
-	if(get_pcvar_num(gg_join_msg) && !welcomed[id])
+	if(!welcomed[id] && get_pcvar_num(gg_join_msg))
 		show_welcome(id);
 
 	// update bomb for DM
@@ -1006,10 +1079,17 @@ public event_deathmsg()
 		return;
 	}
 
+
 	// killed self not with worldspawn
 	if(killer == victim)
 	{
-		player_suicided(victim);
+		if(!roundEnded && get_pcvar_num(gg_allow_changeteam) && equal(wpnName,"world"))
+		{
+			oldTeam[victim] = get_user_team(victim);
+			set_task(0.1,"delayed_suicide",TASK_DELAYED_SUICIDE+victim);
+		}
+		else player_suicided(victim);
+
 		return;
 	}
 
@@ -1108,8 +1188,21 @@ public event_deathmsg()
 		}
 	}
 
+	if(equal(weapon[killer],"hegrenade") && get_pcvar_num(gg_extra_nades) && !cs_get_user_bpammo(killer,CSW_HEGRENADE))
+		fm_give_item(killer,"weapon_hegrenade");
+
 	if((!scored || !get_pcvar_num(gg_turbo)) && get_pcvar_num(gg_refill_on_kill))
 		refill_ammo(killer,1);
+}
+
+// task is set on a potential team change, and removed on an
+// approved team change, so if we reach it, deduct level
+public delayed_suicide(taskid)
+{
+	new id = taskid-TASK_DELAYED_SUICIDE;
+
+	oldTeam[id] = 0;
+	if(is_user_connected(id)) player_suicided(id);
 }
 
 // someone changes weapons
@@ -1137,6 +1230,19 @@ public event_curweapon(id)
 // a new round has begun
 public event_new_round()
 {
+	roundsElapsed++;
+
+	if(!autovoted)
+	{
+		new autovote_rounds = get_pcvar_num(gg_autovote_rounds);
+
+		if(autovote_rounds && gameCommenced && roundsElapsed >= autovote_rounds)
+		{
+			autovoted = 1;
+			set_task(get_pcvar_float(gg_autovote_delay),"autovote_start");
+		}
+	}
+
 	if(!get_pcvar_num(gg_enabled)) return;
 
 	roundEnded = 0;
@@ -1160,13 +1266,12 @@ public event_new_round()
 	else if(equal(weapon[leader],"knife")) play_sound_by_cvar(0,gg_sound_knife);
 
 	// start in random positions at round start
-	new spawn_random = get_pcvar_num(gg_dm_spawn_random);
-	if(get_pcvar_num(gg_dm) && get_pcvar_num(gg_dm_start_random) && spawn_random)
-		set_task(0.1,"randomly_place_everyone",spawn_random);
+	if(get_pcvar_num(gg_dm) && get_pcvar_num(gg_dm_start_random))
+		set_task(0.1,"randomly_place_everyone");
 }
 
 // what do you think??
-public randomly_place_everyone(spawn_random)
+public randomly_place_everyone()
 {
 	new players[32], num, i, CsTeams:team;
 	get_players(players,num);
@@ -1190,7 +1295,7 @@ public randomly_place_everyone(spawn_random)
 
 		// not spectator or unassigned
 		if(team == CS_TEAM_T || team == CS_TEAM_CT)
-			do_random_spawn(players[i],spawn_random);
+			do_random_spawn(players[i],2);
 	}
 }
 
@@ -1205,10 +1310,14 @@ public move_hostages()
 // round is restarting (TAG: sv_restartround)
 public event_round_restart()
 {
+	static message[32];
+	read_data(2,message,31);
+
+	if(equal(message,"#Game_Commencing")) gameCommenced = 1;
+
 	if(!get_pcvar_num(gg_enabled)) return;
 
-	new message[32], block;
-	read_data(2,message,31);
+	new block;
 
 	// block only on round restart, not game commencing
 	if(equal(message,"#Game_will_restart_in")) block = 1;
@@ -1580,6 +1689,46 @@ public logevent_hostage_killed()
 	change_score(id,-penalty);
 }
 
+// someone joins a team
+public logevent_team_join()
+{
+	new id = get_loguser_index();
+	if(!is_user_connected(id) || (oldTeam[id] != 1 && oldTeam[id] != 2)) return;
+
+	static arg2[10];
+	read_logargv(2,arg2,9);
+
+	// get the new team
+	new newTeam;
+	if(equal(arg2,"TERRORIST")) newTeam = 1;
+	else if(equal(arg2,"CT")) newTeam = 2;
+
+	// didn't switch teams, too bad for you (suicide)
+	if(!newTeam || oldTeam[id] == newTeam)
+		return;
+
+	// check to see if the team change was beneficial
+	if(get_pcvar_num(gg_allow_changeteam) == 2)
+	{
+		new teamCount[2], i;
+		for(i=1;i<=maxPlayers;i++)
+		{
+			if(!is_user_connected(i))
+				continue;
+
+			switch(cs_get_user_team(i))
+			{
+				case CS_TEAM_T: teamCount[0]++;
+				case CS_TEAM_CT: teamCount[1]++;
+			}
+		}
+
+		if(teamCount[newTeam-1] <= teamCount[oldTeam[id]-1])
+			remove_task(TASK_DELAYED_SUICIDE+id);
+	}
+	else remove_task(TASK_DELAYED_SUICIDE+id);
+}
+
 //
 // COMMAND HOOKS
 //
@@ -1595,7 +1744,10 @@ public cmd_gungame(id,level,cid)
 	if(task_exists(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE)
 	|| task_exists(TASK_TOGGLE_GUNGAME + TOGGLE_DISABLE)
 	|| task_exists(TASK_TOGGLE_GUNGAME + TOGGLE_ENABLE))
+	{
+		console_print(id,"[GunGame] GunGame is already being turned on or off");
 		return PLUGIN_HANDLED;
+	}
 
 	new arg[32], oldStatus = get_pcvar_num(gg_enabled), newStatus;
 	read_argv(1,arg,31);
@@ -1605,10 +1757,79 @@ public cmd_gungame(id,level,cid)
 
 	// no change
 	if((!oldStatus && !newStatus) || (oldStatus && newStatus))
+	{
+		console_print(id,"[GunGame] GunGame is already %s!",(newStatus) ? "on" : "off");
 		return PLUGIN_HANDLED;
+	}
 
 	set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+newStatus);
 	set_cvar_num("sv_restartround",5);
+
+	console_print(id,"[GunGame] Turned GunGame %s",(newStatus) ? "on" : "off");
+
+	return PLUGIN_HANDLED;
+}
+
+// voting for GunGame
+public cmd_gungame_vote(id,lvl,cid)
+{
+	if(!cmd_access(id,lvl,cid,1))
+		return PLUGIN_HANDLED;
+
+	autovote_start();
+	console_print(id,"[GunGame] Started a vote to play GunGame");
+
+	return PLUGIN_HANDLED;
+}
+
+// setting players levels
+public cmd_gungame_level(id,lvl,cid)
+{
+	if(!cmd_access(id,lvl,cid,3))
+		return PLUGIN_HANDLED;
+
+	new arg1[32], arg2[32], targets[32], name[32], tnum, i;
+	read_argv(1,arg1,31);
+	read_argv(2,arg2,31);
+
+	// get player list
+	if(equali(arg1,"*") || equali(arg1,"@ALL"))
+	{
+		get_players(targets,tnum);
+		name = "ALL PLAYERS";
+	}
+	else if(equali(arg1,"@TERRORIST") || equali(arg1,"@CT"))
+	{
+		new players[32], team[32], pnum;
+		get_players(players,pnum);
+
+		for(i=0;i<pnum;i++)
+		{
+			get_user_team(players[i],team,31);
+			if(equali(team,arg1[1])) targets[tnum++] = players[i];
+		}
+
+		formatex(name,31,"ALL %s",arg1[1]);
+	}
+	else
+	{
+		targets[tnum++] = cmd_target(id,arg1,2);
+		if(!targets[0]) return PLUGIN_HANDLED;
+
+		get_user_name(targets[0],name,31);
+	}
+
+	new intval = str_to_num(arg2);
+
+	// relative
+	if(arg2[0] == '+' || arg2[0] == '-')
+		for(i=0;i<tnum;i++) change_level(targets[i],intval,0,1,1);
+
+	// absolute
+	else
+		for(i=0;i<tnum;i++) change_level(targets[i],intval-level[targets[i]],0,1,1);
+
+	console_print(id,"[GunGame] Changed %s's level to %s",name,arg2);
 
 	return PLUGIN_HANDLED;
 }
@@ -1679,7 +1900,6 @@ public cmd_say(id)
 	else if(equali(message,"!top10"))
 	{
 		get_pcvar_string(gg_stats_file,sfFile,63);
-		trim(sfFile);
 
 		// stats disabled
 		if(!sfFile[0] || !get_pcvar_num(gg_stats_mode))
@@ -1785,15 +2005,8 @@ public toggle_gungame(taskid)
 
 	if(status == TOGGLE_FORCE || status == TOGGLE_ENABLE)
 	{
-		// figure out which config file to use
 		new cfgFile[64];
-		formatex(cfgFile,63,"%s/gungame.cfg",cfgDir);
-
-		if(!file_exists(cfgFile))
-		{
-			cfgFile = "gungame.cfg";
-			if(!file_exists(cfgFile)) cfgFile[0] = 0;
-		}
+		get_gg_config_file(cfgFile,63);
 
 		// run the gungame config
 		if(cfgFile[0] && file_exists(cfgFile))
@@ -1804,9 +2017,7 @@ public toggle_gungame(taskid)
 			while(file && !feof(file))
 			{
 				fgets(file,command,511);
-
 				trim(command);
-				replace_all(command,511,"^t"," ");
 
 				// stop at a comment
 				for(i=0;i<strlen(command)-2;i++)
@@ -1822,25 +2033,25 @@ public toggle_gungame(taskid)
 				}
 
 				// don't override our setting from amx_gungame
-				if(containi(command,"gg_enabled") != -1 && status != TOGGLE_FORCE)
+				if(containi(command,"gg_enabled") != -1 && status == TOGGLE_ENABLE)
 					continue;
 
 				trim(command);
-				if(command[0]) server_cmd(command);
+				if(command[0])
+				{
+					server_cmd(command);
+					server_exec();
+				}
 			}
 			if(file) fclose(file);
-
-			// give them a chance to go through
-			set_task(0.1,"map_start_cvars");
 		}
-
-		// give other configs a chance to set cvars first
-		else set_task(1.0,"map_start_cvars");
 	}
 
-	// don't override our setting from amx_gungame
+	// set to what we chose from amx_gungame
 	if(status != TOGGLE_FORCE) set_pcvar_num(gg_enabled,status);
-	else set_pcvar_num(gg_enabled,get_pcvar_num(gg_enabled));
+
+	// run appropiate cvars
+	map_start_cvars();
 
 	// reset some things
 	if(!get_pcvar_num(gg_enabled))
@@ -1859,34 +2070,43 @@ public toggle_gungame(taskid)
 		remove_task(TASK_WARMUP_CHECK);
 	}
 
-	stats_get_top_players(10,top10,80);
+	stats_get_top_players(TOP_PLAYERS,top10,80);
 }
 
 // run cvars that should be run on map start
 public map_start_cvars()
 {
+	new setup[512];
+
+	// gungame is disabled, run endmap_setup
 	if(!get_pcvar_num(gg_enabled))
-		return;
-
-	// run map setup
-	new map_setup[512];
-	get_pcvar_string(gg_map_setup,map_setup,511);
-	server_cmd(map_setup);
-
-	// warmup is -13 after its finished, this stops multiple warmups for multiple map iterations
-	new warmup_value = get_pcvar_num(gg_warmup_timer_setting);
-	if(warmup_value > 0 && warmup != -13)
 	{
-		warmup = warmup_value;
-		set_task(0.1,"warmup_check",TASK_WARMUP_CHECK);
+		get_pcvar_string(gg_endmap_setup,setup,511);
+		server_cmd(setup);
+		server_exec();
 	}
+	else
+	{
+		// run map setup
+		get_pcvar_string(gg_map_setup,setup,511);
+		server_cmd(setup);
+		server_exec();
 
-	// random weapon orders
-	do_rOrder();
+		// warmup is -13 after its finished, this stops multiple warmups for multiple map iterations
+		new warmup_value = get_pcvar_num(gg_warmup_timer_setting);
+		if(warmup_value > 0 && warmup != -13)
+		{
+			warmup = warmup_value;
+			set_task(0.1,"warmup_check",TASK_WARMUP_CHECK);
+		}
+
+		// random weapon orders
+		do_rOrder();
+	}
 }
 
 // select a random weapon order
-public do_rOrder()
+do_rOrder()
 {
 	new i, maxRandom, cvar[20];
 	for(i=1;i<=MAX_WEAPON_ORDERS+1;i++) // +1 so we can detect final
@@ -1942,7 +2162,7 @@ public do_rOrder()
 }
 
 // get the value of an order index in an order string
-public get_rOrder_index_val(index,randomOrder[])
+get_rOrder_index_val(index,randomOrder[])
 {
 	// only one listed
 	if(str_count(randomOrder,',') < 1)
@@ -1959,7 +2179,7 @@ public get_rOrder_index_val(index,randomOrder[])
 }
 
 // gets the amount of orders in an order string
-public get_rOrder_amount(randomOrder[])
+get_rOrder_amount(randomOrder[])
 {
 	return str_count(randomOrder,',')+1;
 }
@@ -2031,7 +2251,7 @@ public restart_menu_handler(id,key)
 }
 
 // show the level display
-public show_level_menu(id)
+show_level_menu(id)
 {
 	new goal, tied, leaderNum, leaderList[128], name[32];
 	new bestLevel, bestPlayer = get_leader(bestLevel);
@@ -2071,7 +2291,7 @@ public show_level_menu(id)
 		}
 	}
 
-	goal = get_weapon_goal(weapon[id]);
+	goal = get_level_goal(level[id]);
 
 	new displayWeapon[16];
 	if(level[id]) formatex(displayWeapon,15,"%s",weapon[id]);
@@ -2116,9 +2336,9 @@ public show_level_menu(id)
 }
 
 // show the top10 list menu
-public show_top10_menu(id)
+show_top10_menu(id)
 {
-	new totalPlayers = 10, playersPerPage = 5, stats_mode = get_pcvar_num(gg_stats_mode);
+	new totalPlayers = TOP_PLAYERS, playersPerPage = 5, stats_mode = get_pcvar_num(gg_stats_mode);
 	new pageTotal = floatround(float(totalPlayers) / float(playersPerPage),floatround_ceil);
 
 	if(page[id] < 1) page[id] = 1;
@@ -2185,7 +2405,7 @@ public show_top10_menu(id)
 // someone pressed a key on the top10 list menu page
 public top10_menu_handler(id,key)
 {
-	new totalPlayers = 10, playersPerPage = 5;
+	new totalPlayers = TOP_PLAYERS, playersPerPage = 5;
 	new pageTotal = floatround(float(totalPlayers) / float(playersPerPage),floatround_ceil);
 
 	if(page[id] < 1 || page[id] > pageTotal) return;
@@ -2213,7 +2433,7 @@ public top10_menu_handler(id,key)
 }
 
 // show the weapon list menu
-public show_weapons_menu(id)
+show_weapons_menu(id)
 {
 	new totalWeapons = get_weapon_num(), wpnsPerPage = 10;
 	new pageTotal = floatround(float(totalWeapons) / float(wpnsPerPage),floatround_ceil);
@@ -2237,7 +2457,7 @@ public show_weapons_menu(id)
 		get_weapon_name_by_level(i,wName,23);
 
 		if(customKills)
-			len += formatex(menuText[len],511-len,"%L %i: %s (%i)^n",id,"LEVEL",i,wName,get_weapon_goal(wName));
+			len += formatex(menuText[len],511-len,"%L %i: %s (%i)^n",id,"LEVEL",i,wName,get_level_goal(i));
 		else
 			len += formatex(menuText[len],511-len,"%L %i: %s^n",id,"LEVEL",i,wName);
 	}
@@ -2290,7 +2510,7 @@ public weapons_menu_handler(id,key)
 }
 
 // show the score list menu
-public show_scores_menu(id)
+show_scores_menu(id)
 {
 	new totalPlayers = get_playersnum(), playersPerPage = 5, stats_mode = get_pcvar_num(gg_stats_mode);
 	new pageTotal = floatround(float(totalPlayers) / float(playersPerPage),floatround_ceil);
@@ -2304,14 +2524,13 @@ public show_scores_menu(id)
 	// order by highest level first
 	SortCustom1D(players,num,"score_custom_compare");
 
-	len = formatex(menuText,511-len,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"SCORES",page[id],pageTotal);
+	len = formatex(menuText,511,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"SCORES",page[id],pageTotal);
 	//len += formatex(menuText[len],511-len,"\d-----------\w^n");
 
 	new start = (playersPerPage * (page[id]-1)), i, name[32], player, authid[24], wins, points;
 
 	// check for stats
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	new stats_ip = get_pcvar_num(gg_stats_ip);
 
@@ -2481,13 +2700,13 @@ public show_welcome(id)
 }
 
 // show the required kills message
-public show_required_kills(id)
+show_required_kills(id)
 {
-	gungame_hudmessage(id,3.0,"%L, %i/%i",id,"REQUIRED_KILLS",score[id],get_weapon_goal(weapon[id]));
+	gungame_hudmessage(id,3.0,"%L, %i/%i",id,"REQUIRED_KILLS",score[id],get_level_goal(level[id]));
 }
 
 // player killed himself
-public player_suicided(id)
+player_suicided(id)
 {
 	// we still have protection (round ended, new one hasn't started yet)
 	if(roundEnded) return;
@@ -2506,7 +2725,7 @@ public change_score(id,value)
 {
 	if(!can_score(id)) return 0;
 
-	new oldScore = score[id], goal = get_weapon_goal(weapon[id]);
+	new oldScore = score[id], goal = get_level_goal(level[id]);
 
 	// if this is going to level us
 	if(score[id] + value >= goal)
@@ -2535,7 +2754,7 @@ public change_score(id,value)
 	// check for level down
 	if(score[id] < 0)
 	{
-		goal = get_weapon_goal("",level[id] > 1 ? level[id]-1 : 1);
+		goal = get_level_goal(level[id] > 1 ? level[id]-1 : 1);
 
 		score[id] = (oldScore + value) + goal; // carry over points
 		if(score[id] < 0) score[id] = 0;
@@ -2555,19 +2774,20 @@ public change_score(id,value)
 	if(sdisplay == STATUS_KILLSLEFT || sdisplay == STATUS_KILLSDONE)
 		status_display(id);
 
-	if(value < 0) show_required_kills(id);
+	if(value < 0)
+		show_required_kills(id);
+	else
+		client_cmd(id,"speak ^"buttons/bell1.wav^"");
 
 	if(get_pcvar_num(gg_refill_on_kill)) refill_ammo(id);
-
-	client_cmd(id,"speak ^"buttons/bell1.wav^"");
 
 	return 0;
 }
 
 // player gained or lost a level
-stock change_level(id,value,just_joined=0,show_message=1)
+stock change_level(id,value,just_joined=0,show_message=1,always_score=0)
 {
-	if(level[id] > 0 && !can_score(id))
+	if(level[id] > 0 && !always_score && !can_score(id))
 		return;
 
 	// knife warmup, don't bother leveling up
@@ -2588,7 +2808,7 @@ stock change_level(id,value,just_joined=0,show_message=1)
 	}
 
 	level[id] += value;
-	levelsThisRound[id] += value
+	levelsThisRound[id] += value;
 
 	// level up!
 	if(value > 0) play_sound_by_cvar(id,gg_sound_levelup);
@@ -2637,7 +2857,7 @@ stock change_level(id,value,just_joined=0,show_message=1)
 	}
 
 	// make sure we don't have more than required now
-	new goal = get_weapon_goal(weapon[id]);
+	new goal = get_level_goal(level[id]);
 	if(score[id] >= goal) score[id] = goal-1; // 1 under
 
 	// status display
@@ -2660,86 +2880,19 @@ stock change_level(id,value,just_joined=0,show_message=1)
 	&& mapIteration >= get_pcvar_num(gg_map_iterations))
 	{
 		new mapCycleFile[64];
-		get_gg_mapcycle_filename(mapCycleFile,63);
+		get_gg_mapcycle_file(mapCycleFile,63);
 
 		// start map vote?
-		if(!mapCycleFile[0])
+		if(!mapCycleFile[0] || !file_exists(mapCycleFile))
 		{
 			voted = 1;
 
 			// check for a custom vote
 			new custom[256];
 			get_pcvar_string(gg_vote_custom,custom,255);
-			trim(custom);
 
 			if(custom[0]) server_cmd(custom);
-			else
-			{
-				new DMM, dmmName[32];
-
-				// Deagles' Map Management 2.30b
-				if(find_plugin_byfile("deagsmapmanage230b.amxx") != INVALID_PLUGIN_ID)
-				{
-					DMM = 1;
-					format(dmmName,31,"deagsmapmanage230b.amxx");
-				}
-
-				// Deagles' Map Management 2.40
-				else if(find_plugin_byfile("deagsmapmanager.amxx") != INVALID_PLUGIN_ID)
-				{
-					DMM = 1;
-					format(dmmName,31,"deagsmapmanager.amxx");
-				}
-
-				// AMXX Nextmap Chooser
-				else if(find_plugin_byfile("mapchooser.amxx") != INVALID_PLUGIN_ID)
-				{
-					new oldWinLimit = get_cvar_num("mp_winlimit"), oldMaxRounds = get_cvar_num("mp_maxrounds");
-					set_cvar_num("mp_winlimit",0); // skip winlimit check
-					set_cvar_num("mp_maxrounds",-1); // trick plugin to think game is almost over
-
-					// call the vote
-					if(callfunc_begin("voteNextmap","mapchooser.amxx") == 1)
-						callfunc_end();
-
-					// set maxrounds back
-					set_cvar_num("mp_winlimit",oldWinLimit);
-					set_cvar_num("mp_maxrounds",oldMaxRounds);
-				}
-
-				// NOTHING?
-				else log_amx("Using gg_vote_setting without mapchooser.amxx, deagsmapmanage230b.amxx, or deagsmapmanager.amxx: could not start a vote!");
-
-				// do DMM stuff
-				if(DMM)
-				{
-					// allow voting
-					/*if(callfunc_begin("dmapvotemode",dmmName) == 1)
-					{
-						callfunc_push_int(0); // server
-						callfunc_end();
-					}*/
-
-					new oldWinLimit = get_cvar_num("mp_winlimit"), Float:oldTimeLimit = get_cvar_float("mp_timelimit");
-					set_cvar_num("mp_winlimit",99999); // don't allow extending
-					set_cvar_float("mp_timelimit",0.0); // don't wait for buying
-					set_cvar_num("enforce_timelimit",1); // don't change map after vote
-
-					// call the vote
-					if(callfunc_begin("startthevote",dmmName) == 1)
-						callfunc_end();
-
-					set_cvar_num("mp_winlimit",oldWinLimit);
-					set_cvar_float("mp_timelimit",oldTimeLimit);
-
-					// disallow further voting
-					/*if(callfunc_begin("dmapcyclemode",dmmName) == 1)
-					{
-						callfunc_push_int(0); // server
-						callfunc_end();
-					}*/
-				}
-			}
+			else start_mapvote();
 		}
 	}
 
@@ -2784,7 +2937,6 @@ stock change_level(id,value,just_joined=0,show_message=1)
 
 			new sound[64];
 			get_pcvar_string(gg_sound_triple,sound,63);
-			trim(sound);
 
 			fm_set_user_maxspeed(id,fm_get_user_maxspeed(id)*1.5);
 			if(sound[0]) emit_sound(id,CHAN_VOICE,sound,VOL_NORM,ATTN_NORM,0,PITCH_NORM);
@@ -3006,7 +3158,7 @@ stock give_level_weapon(id,notify=1,verify=1)
 		}
 		else if(level[id] <= get_weapon_num()) // didn't just win
 		{
-			new goal = get_weapon_goal(weapon[id]);
+			new goal = get_level_goal(level[id]);
 
 			gungame_print(id,-1,"%L %%n%i%%e :: %%n%s%%e",id,"ON_LEVEL",level[id],weapon[id]);
 			gungame_print(id,-1,"%L",id,"PROGRESS_DISPLAY",goal-score[id],score[id],goal);
@@ -3212,13 +3364,32 @@ public respawn(taskid)
 			dllfunc(DLLFunc_Think,ent);
 	}
 
-	// properly respawn
-	blockCorpse[id] = 1;
-	fm_cs_user_spawn(id);
-
-	// random spawns
 	new spawn_random = get_pcvar_num(gg_dm_spawn_random);
-	if(spawn_random) do_random_spawn(id,spawn_random);
+	if(spawn_random) spawnSounds[id] = 0;
+
+	if(csrespawnEnabled)
+		cs_respawn(id);
+	else
+	{
+		// properly respawn
+		blockCorpse[id] = 1;
+		fm_cs_user_spawn(id);
+
+		// make sure they made it
+		remove_task(TASK_CHECK_RESPAWN+id);
+		remove_task(TASK_CHECK_RESPAWN2+id);
+		set_task(0.5,"check_respawn",TASK_CHECK_RESPAWN+id);
+		set_task(1.5,"check_respawn",TASK_CHECK_RESPAWN2+id);
+	}
+
+	if(spawn_random)
+	{
+		do_random_spawn(id,spawn_random);
+		spawnSounds[id] = 1;
+
+		// to be fair, play a spawn noise at new location
+		engfunc(EngFunc_EmitSound,id,CHAN_ITEM,"items/gunpickup2.wav",VOL_NORM,ATTN_NORM,0,PITCH_NORM);
+	}
 
 	new Float:time = get_pcvar_float(gg_dm_sp_time);
 	new mode = get_pcvar_num(gg_dm_sp_mode);
@@ -3236,17 +3407,15 @@ public respawn(taskid)
 
 		set_task(time,"remove_spawn_protection",TASK_REMOVE_PROTECTION+id);
 	}
-
-	// make sure they made it
-	remove_task(TASK_CHECK_RESPAWN+id);
-	remove_task(TASK_CHECK_RESPAWN2+id);
-	set_task(0.5,"check_respawn",TASK_CHECK_RESPAWN+id);
-	set_task(1.5,"check_respawn",TASK_CHECK_RESPAWN2+id);
 }
 
 // place a user at a random spawn
-public do_random_spawn(id,spawn_random)
+do_random_spawn(id,spawn_random)
 {
+	// not even alive, don't brother
+	if(!is_user_alive(id) || pev(id,pev_iuser1))
+		return;
+
 	// no spawns???
 	if(spawnCount <= 0) return;
 
@@ -3254,7 +3423,8 @@ public do_random_spawn(id,spawn_random)
 	if(spawn_random == 2 && !csdmSpawnCount)
 		return;
 
-	new Float:vecHolder[3], sp_index = random_num(0,spawnCount-1);
+	static Float:vecHolder[3];
+	new sp_index = random_num(0,spawnCount-1);
 
 	// get origin for comparisons
 	vecHolder[0] = spawns[sp_index][0];
@@ -3342,7 +3512,7 @@ public give_essentials(id)
 {
 	if(!is_user_alive(id) || pev(id,pev_iuser1)) return;
 
-	fm_give_item(id,"item_suit");
+	fm_set_user_suit(id,true,false);
 	if(!user_has_weapon(id,CSW_KNIFE)) fm_give_item(id,"weapon_knife");
 }
 
@@ -3360,7 +3530,7 @@ public remove_spawn_protection(taskid)
 }
 
 // crown a winner
-public win(id)
+win(id)
 {
 	if(won) return;
 
@@ -3373,24 +3543,15 @@ public win(id)
 	// final playthrough, get ready for next map
 	if(mapIteration >= get_pcvar_num(gg_map_iterations))
 	{
-		// send a fake intermission to DMM, because if it intercepts a real
-		// one then it will change map instantly, and give players no time
-		// to relish their victory.
-		if(find_plugin_byfile("deagsmapmanage230b.amxx") != INVALID_PLUGIN_ID
-		|| find_plugin_byfile("deagsmapmanager.amxx") != INVALID_PLUGIN_ID)
-		{
-			message_begin(MSG_ALL,SVC_INTERMISSION);
-			message_end();
-		}
-
-		// if we are not running DMM, we can send a real one, just because.
-		else
-		{
-			emessage_begin(MSG_ALL,SVC_INTERMISSION);
-			emessage_end();
-		}
-
+		set_nextmap();
 		set_task(10.0,"goto_nextmap");
+
+		// as of 1.16, we always send a non-emessage intermission, because
+		// other map changing plugins (as well as StatsMe) intercepting it
+		// was causing problems.
+
+		message_begin(MSG_ALL,SVC_INTERMISSION);
+		message_end();
 	}
 
 	// get ready to go again!!
@@ -3426,7 +3587,6 @@ public win(id)
 	set_cvar_num("sv_alltalk",1);
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	new stats_mode = get_pcvar_num(gg_stats_mode), stats_ip = get_pcvar_num(gg_stats_ip);
 
@@ -3523,17 +3683,76 @@ public stop_win_sound()
 }
 
 //
+// AUTOVOTE FUNCTIONS
+//
+
+// start the autovote
+public autovote_start()
+{
+	// vote in progress
+	if(autovotes[0] || autovotes[1]) return;
+
+	new Float:autovote_time = get_pcvar_float(gg_autovote_time);
+
+	format(menuText,511,"\y%L^n^n\w1. %L^n2. %L^n^n0. %L",LANG_PLAYER,"PLAY_GUNGAME",LANG_PLAYER,"YES",LANG_PLAYER,"NO",LANG_PLAYER,"CANCEL");
+
+	show_menu(0,MENU_KEY_1|MENU_KEY_2|MENU_KEY_0,menuText,floatround(autovote_time),"autovote_menu");
+	set_task(autovote_time,"autovote_result");
+}
+
+// take in votes
+public autovote_menu_handler(id,key)
+{
+	switch(key)
+	{
+		case 0: autovotes[1]++;
+		case 1: autovotes[0]++;
+		//case 9: let menu close
+	}
+
+	return PLUGIN_HANDLED;
+}
+
+// calculate end of vote
+public autovote_result()
+{
+	new enable, enabled = get_pcvar_num(gg_enabled);
+
+	if(autovotes[0] || autovotes[1])
+	{
+		if(float(autovotes[1]) / float(autovotes[0] + autovotes[1]) >= get_pcvar_float(gg_autovote_ratio))
+			enable = 1;
+	}
+
+	gungame_print(0,-1,"%L (%L: %i, %L: %i)",LANG_PLAYER_C,(enable) ? "VOTING_SUCCESS" : "VOTING_FAILED",LANG_PLAYER_C,"YES",autovotes[1],LANG_PLAYER_C,"NO",autovotes[0]);
+
+	if(enable && !enabled)
+	{
+		set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_ENABLE);
+		set_cvar_num("sv_restartround",5);
+	}
+	else if(!enable && enabled)
+	{
+		set_task(4.8,"toggle_gungame",TASK_TOGGLE_GUNGAME+TOGGLE_DISABLE);
+		set_cvar_num("sv_restartround",5);
+	}
+
+	// reset votes
+	autovotes[0] = 0;
+	autovotes[1] = 0;
+}
+
+//
 // STAT FUNCTIONS
 //
 
 // add to a player's wins
-public stats_add_to_score(id,wins,points,&newWins,&newPoints)
+stats_add_to_score(id,wins,points,&newWins,&newPoints)
 {
 	// stats disabled
 	if(!get_pcvar_num(gg_stats_mode)) return 0;
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled
 	if(!sfFile[0]) return 0;
@@ -3571,7 +3790,6 @@ stock stats_get_data(authid[],&wins,&points,lastName[],nameLen,&timestamp,knownL
 	if(!get_pcvar_num(gg_stats_mode)) return -1;
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled/file doesn't exist
 	if(!sfFile[0] || !file_exists(sfFile)) return -1;
@@ -3650,7 +3868,6 @@ stock stats_set_data(authid[],wins,points,lastName[],timestamp,knownLine=-1)
 	if(!get_pcvar_num(gg_stats_mode)) return 0;
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled
 	if(!sfFile[0]) return 0;
@@ -3658,13 +3875,12 @@ stock stats_set_data(authid[],wins,points,lastName[],timestamp,knownLine=-1)
 	// storage format:
 	// AUTHID	WINS	LAST_USED_NAME	TIMESTAMP	POINTS
 
-	new mod[12], tempFileName[65], sfFile_rename[64], newFile_rename[65], file;
+	new tempFileName[65], sfFile_rename[64], newFile_rename[65], file;
 	formatex(tempFileName,64,"%s2",sfFile); // our temp file, append 2
 
 	// rename_file backwards compatibility (thanks Mordekay)
-	get_modname(mod,11);
-	formatex(sfFile_rename,63,"%s/%s",mod,sfFile);
-	formatex(newFile_rename,64,"%s/%s",mod,tempFileName);
+	formatex(sfFile_rename,63,"%s/%s",modName,sfFile);
+	formatex(newFile_rename,64,"%s/%s",modName,tempFileName);
 
 	// create stats file if it doesn't exist
 	if(!file_exists(sfFile))
@@ -3742,7 +3958,7 @@ stock stats_set_data(authid[],wins,points,lastName[],timestamp,knownLine=-1)
 }
 
 // update a user's timestamp
-public stats_refresh_timestamp(authid[])
+stats_refresh_timestamp(authid[])
 {
 	new wins, points, lastName[32], timestamp;
 	new line = stats_get_data(authid,wins,points,lastName,31,timestamp);
@@ -3752,13 +3968,12 @@ public stats_refresh_timestamp(authid[])
 
 // gets the top X amount of players into an array
 // of the format: storage[amount][storageLen]
-public stats_get_top_players(amount,storage[][],storageLen)
+stats_get_top_players(amount,storage[][],storageLen)
 {
 	// stats disabled
 	if(!get_pcvar_num(gg_stats_mode)) return 0;
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled/file doesn't exist
 	if(!sfFile[0] || !file_exists(sfFile)) return 0;
@@ -3766,11 +3981,10 @@ public stats_get_top_players(amount,storage[][],storageLen)
 	// storage format:
 	// AUTHID	WINS	LAST_USED_NAME	TIMESTAMP	POINTS
 
-	// OMG OMG OMG OMG
-	static stats_listing[999][2];
+	// not so much OMG OMG OMG OMG as of 1.16
+	static tempList[TOP_PLAYERS+1][82], tempLineData[81];
 
-	new lines = file_size(sfFile,1), count,
-	stats_mode = get_pcvar_num(gg_stats_mode), score[10];
+	new count, stats_mode = get_pcvar_num(gg_stats_mode), score[10];
 
 	// open sesame
 	new line, file = fopen(sfFile,"rt");
@@ -3785,73 +3999,60 @@ public stats_get_top_players(amount,storage[][],storageLen)
 		// empty line
 		if(!sfLineData[0]) continue;
 
+		// assign it to a new variable so that strtok
+		// doesn't tear apart our constant sfLineData variable
+		tempLineData = sfLineData;
+
 		// get rid of authid
-		strtok(sfLineData,dummy,1,sfLineData,80,'^t');
+		strtok(tempLineData,dummy,1,tempLineData,80,'^t');
 
 		// sort by wins
 		if(stats_mode == 1)
 		{
-			strtok(sfLineData,score,9,sfLineData,1,'^t');
+			strtok(tempLineData,score,9,tempLineData,1,'^t');
 		}
 
 		// sort by points
 		else
 		{
 			// break off wins
-			strtok(sfLineData,dummy,1,sfLineData,80,'^t');
+			strtok(tempLineData,dummy,1,tempLineData,80,'^t');
 
 			// break off name
-			strtok(sfLineData,dummy,1,sfLineData,80,'^t');
+			strtok(tempLineData,dummy,1,tempLineData,80,'^t');
 
 			// break off timestamp and get points
-			strtok(sfLineData,dummy,1,score,9,'^t');
+			strtok(tempLineData,dummy,1,score,9,'^t');
 		}
 
-		// if we have more players than the size of our array,
-		// only consider players that have at least 10 wins or 100 points
-		if(lines >= 999)
-		{
-			if(stats_mode == 1 && str_to_num(score) < 10) continue;
-			else if(stats_mode == 2 && str_to_num(score) < 100) continue;
-		}
+		// don't store more than 11
+		if(count >= amount) count = amount;
 
-		stats_listing[count][0] = str_to_num(score);
-		stats_listing[count][1] = line-1;
+		tempList[count][0] = str_to_num(score);
+		formatex(tempList[count][1],81,"%s",sfLineData);
 		count++;
+
+		// filled list with 11, sort
+		if(count > amount) SortCustom2D(tempList,count,"stats_custom_compare");
 	}
 
-	// sort it all!
-	if(count) SortCustom2D(stats_listing,count,"stats_custom_compare");
-	else
+	// nolisting
+	if(!count)
 	{
 		fclose(file);
 		return 0;
 	}
 
-	// now that it's sorted, return it
+	// not yet sorted (didn't reach 11 entries)
+	else if(count <= amount)
+		SortCustom2D(tempList,count,"stats_custom_compare");
+
 	new i;
-	for(i=0;i<amount;i++)
-	{
-		// end of entries
-		if(i >= count) break;
 
-		// go back to start of file
-		fseek(file,0,SEEK_SET);
-		line = 0;
+	// now that it's sorted, return it
+	for(i=0;i<amount&&i<count;i++)
+		formatex(storage[i],storageLen,"%s",tempList[i][1]);
 
-		// read
-		while(!feof(file))
-		{
-			fgets(file,sfLineData,80);
-
-			// check second dimension for line number
-			if(line++ == stats_listing[i][1])
-			{
-				formatex(storage[i],storageLen,"%s",sfLineData);
-				break;
-			}
-		}
-	}
 
 	// close
 	fclose(file);
@@ -3872,7 +4073,6 @@ public stats_custom_compare(elem1[],elem2[])
 stock stats_prune(max_time=-1)
 {
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	trim(sfFile);
 
 	// stats disabled/file doesn't exist
 	if(!sfFile[0] || !file_exists(sfFile)) return 0;
@@ -3883,13 +4083,12 @@ stock stats_prune(max_time=-1)
 	// 0 = no pruning
 	if(max_time == 0) return 0;
 
-	new mod[12], tempFileName[65], sfFile_rename[64], newFile_rename[65];
+	new tempFileName[65], sfFile_rename[64], newFile_rename[65];
 	formatex(tempFileName,64,"%s2",sfFile); // our temp file, append 2
 
 	// rename_file backwards compatibility (thanks Mordekay)
-	get_modname(mod,11);
-	formatex(sfFile_rename,63,"%s/%s",mod,sfFile);
-	formatex(newFile_rename,64,"%s/%s",mod,tempFileName);
+	formatex(sfFile_rename,63,"%s/%s",modName,sfFile);
+	formatex(newFile_rename,64,"%s/%s",modName,tempFileName);
 
 	// copy over current stat file
 	rename_file(sfFile_rename,newFile_rename);
@@ -3940,38 +4139,28 @@ stock stats_prune(max_time=-1)
 // SUPPORT FUNCTIONS
 //
 
-// gets amount of kills required for this weapon
-stock get_weapon_goal(wpnName[],level=0)
+stock get_level_goal(level)
 {
-	static wpnNameFull[32];
+	get_pcvar_string(gg_weapon_order,weaponOrder,415);
 
-	// level specified
-	if(level) get_weapon_name_by_level(level,wpnNameFull,31,1);
+	new comma = str_find_num(weaponOrder,',',level-1)+1;
 
-	// otherwise, we have to find this weapon with its custom goal attached
-	else
-	{
-		get_pcvar_string(gg_weapon_order,weaponOrder,415);
+	static crop[32];
+	copyc(crop,31,weaponOrder[comma],',');
 
-		new start = containi(weaponOrder,wpnName);
-		if(start == -1) return get_pcvar_num(gg_kills_per_lvl);
-
-		copyc(wpnNameFull,31,weaponOrder[start],',');
-	}
-
-	new colon = containi(wpnNameFull,":");
+	new colon = containi(crop,":");
 
 	// no custom goal
 	if(colon == -1)
 	{
-		if(equal(wpnNameFull,"hegrenade") || equal(wpnNameFull,"knife"))
+		if(equal(crop,"hegrenade") || equal(crop,"knife"))
 			return 1;
 		else
 			return get_pcvar_num(gg_kills_per_lvl);
 	}
 
 	static goal[4];
-	copyc(goal,3,wpnNameFull[colon+1],',');
+	copyc(goal,3,crop[colon+1],',');
 
 	return str_to_num(goal);
 }
@@ -4003,10 +4192,9 @@ stock get_weapon_name_by_level(theLevel,var[],varLen,includeGoal=0)
 }
 
 // get the weapons, in order
-public get_weapon_order(weapons[32][24])
+get_weapon_order(weapons[32][24])
 {
 	get_pcvar_string(gg_weapon_order,weaponOrder,415);
-	trim(weaponOrder);
 
 	new i;
 	for(i=0;i<32;i++)
@@ -4032,18 +4220,17 @@ public get_weapon_order(weapons[32][24])
 }
 
 // get the number of weapons to go through
-public get_weapon_num()
+get_weapon_num()
 {
 	get_pcvar_string(gg_weapon_order,weaponOrder,415);
 	return str_count(weaponOrder,',') + 1;
 }
 
 // easy function to precache sound via cvar
-public precache_sound_by_cvar(cvar[],default_val[])
+precache_sound_by_cvar(cvar[],default_val[])
 {
 	new value[64];
 	get_cvar_string(cvar,value,63);
-	trim(value);
 
 	// mp3s precache as generic (full filepath)
 	if(containi(value,".mp3") != -1 || (!value[0] && containi(default_val,".mp3") != -1))
@@ -4063,8 +4250,20 @@ public precache_sound_by_cvar(cvar[],default_val[])
 	}
 }
 
+// figure out which gungame.cfg file to use
+get_gg_config_file(filename[],len)
+{
+	formatex(filename,len,"%s/gungame.cfg",cfgDir);
+
+	if(!file_exists(filename))
+	{
+		formatex(filename,len,"gungame.cfg");
+		if(!file_exists(filename)) filename[0] = 0;
+	}
+}
+
 // figure out which gungame_mapcycle file to use
-public get_gg_mapcycle_filename(filename[],len)
+get_gg_mapcycle_file(filename[],len)
 {
 	new testFile[64];
 
@@ -4104,11 +4303,10 @@ public get_gg_mapcycle_filename(filename[],len)
 }
 
 // another easy function to play sound via cvar
-public play_sound_by_cvar(id,cvar)
+play_sound_by_cvar(id,cvar)
 {
 	static value[64];
 	get_pcvar_string(cvar,value,63);
-	trim(value);
 
 	if(!value[0]) return;
 
@@ -4117,7 +4315,7 @@ public play_sound_by_cvar(id,cvar)
 }
 
 // find the highest level player and his level
-public get_leader(&Rlevel)
+get_leader(&Rlevel)
 {
 	new players[32], num, i, leader;
 	get_players(players,num);
@@ -4134,7 +4332,7 @@ public get_leader(&Rlevel)
 }
 
 // a butchered version of teame06's CS Color Chat Function
-public gungame_print(id,custom,msg[],{Float,Sql,Result,_}:...)
+gungame_print(id,custom,msg[],{Float,Sql,Result,_}:...)
 {
 	new changeCount, num, i, j;
 	static newMsg[191], message[191], changed[5], players[32];
@@ -4194,9 +4392,6 @@ public gungame_print(id,custom,msg[],{Float,Sql,Result,_}:...)
 		if(custom == -1) formatex(message,190,"^x04[%L]^x01 %s",players[i],"GUNGAME",newMsg);
 		else formatex(message,190,"^x01%s",newMsg);
 
-		// cut it off
-		message[190] = '^0';
-
 		message_begin(MSG_ONE,gmsgSayText,_,players[i]);
 		write_byte((custom > 0) ? custom : players[i]);
 		write_string(message);
@@ -4205,7 +4400,7 @@ public gungame_print(id,custom,msg[],{Float,Sql,Result,_}:...)
 }
 
 // show a HUD message to a user
-public gungame_hudmessage(id,Float:holdTime,msg[],{Float,Sql,Result,_}:...)
+gungame_hudmessage(id,Float:holdTime,msg[],{Float,Sql,Result,_}:...)
 {
 	// user formatting
 	static newMsg[191];
@@ -4216,90 +4411,193 @@ public gungame_hudmessage(id,Float:holdTime,msg[],{Float,Sql,Result,_}:...)
 	show_hudmessage(id,newMsg);
 }
 
-// change the map to the next one
-public goto_nextmap()
+// start a map vote
+start_mapvote()
+{
+	new dmmName[32];
+
+	// AMXX Nextmap Chooser
+	if(find_plugin_byfile("mapchooser.amxx") != INVALID_PLUGIN_ID)
+	{
+		new oldWinLimit = get_cvar_num("mp_winlimit"), oldMaxRounds = get_cvar_num("mp_maxrounds");
+		set_cvar_num("mp_winlimit",0); // skip winlimit check
+		set_cvar_num("mp_maxrounds",-1); // trick plugin to think game is almost over
+
+		// call the vote
+		if(callfunc_begin("voteNextmap","mapchooser.amxx") == 1)
+			callfunc_end();
+
+		// set maxrounds back
+		set_cvar_num("mp_winlimit",oldWinLimit);
+		set_cvar_num("mp_maxrounds",oldMaxRounds);
+	}
+
+	// Deagles' Map Management 2.30b
+	else if(find_plugin_byfile("deagsmapmanage230b.amxx") != INVALID_PLUGIN_ID)
+	{
+		dmmName = "deagsmapmanage230b.amxx";
+	}
+
+	// Deagles' Map Management 2.40
+	else if(find_plugin_byfile("deagsmapmanager.amxx") != INVALID_PLUGIN_ID)
+	{
+		dmmName = "deagsmapmanager.amxx";
+	}
+
+	//  Mapchooser4
+	else if(find_plugin_byfile("mapchooser4.amxx") != INVALID_PLUGIN_ID)
+	{
+		new oldWinLimit = get_cvar_num("mp_winlimit"), oldMaxRounds = get_cvar_num("mp_maxrounds");
+		set_cvar_num("mp_winlimit",0); // skip winlimit check
+		set_cvar_num("mp_maxrounds",1); // trick plugin to think game is almost over
+
+		// deactivate g_buyingtime variable
+		if(callfunc_begin("buyFinished","mapchooser4.amxx") == 1)
+			callfunc_end();
+
+		// call the vote
+		if(callfunc_begin("voteNextmap","mapchooser4.amxx") == 1)
+		{
+			callfunc_push_str("",false);
+			callfunc_end();
+		}
+
+		// set maxrounds back
+		set_cvar_num("mp_winlimit",oldWinLimit);
+		set_cvar_num("mp_maxrounds",oldMaxRounds);
+	}
+
+	// NOTHING?
+	else log_amx("Using gg_vote_setting without mapchooser.amxx, mapchooser4.amxx, deagsmapmanage230b.amxx, or deagsmapmanager.amxx: could not start a vote!");
+
+	// do DMM stuff
+	if(dmmName[0])
+	{
+		// allow voting
+		/*if(callfunc_begin("dmapvotemode",dmmName) == 1)
+					{
+			callfunc_push_int(0); // server
+			callfunc_end();
+		}*/
+
+		new oldWinLimit = get_cvar_num("mp_winlimit"), Float:oldTimeLimit = get_cvar_float("mp_timelimit");
+		set_cvar_num("mp_winlimit",99999); // don't allow extending
+		set_cvar_float("mp_timelimit",0.0); // don't wait for buying
+		set_cvar_num("enforce_timelimit",1); // don't change map after vote
+
+		// call the vote
+		if(callfunc_begin("startthevote",dmmName) == 1)
+			callfunc_end();
+
+		set_cvar_num("mp_winlimit",oldWinLimit);
+		set_cvar_float("mp_timelimit",oldTimeLimit);
+
+		// disallow further voting
+		/*if(callfunc_begin("dmapcyclemode",dmmName) == 1)
+		{
+			callfunc_push_int(0); // server
+			callfunc_end();
+		}*/
+	}
+}
+
+// set amx_nextmap to the next map
+set_nextmap()
 {
 	new mapCycleFile[64];
-	get_gg_mapcycle_filename(mapCycleFile,63);
+	get_gg_mapcycle_file(mapCycleFile,63);
 
-	// custom gungame mapcycle
-	if(mapCycleFile[0])
+	// no mapcycle, leave amx_nextmap alone
+	if(!mapCycleFile[0] || !file_exists(mapCycleFile)) return;
+
+	new currentMap[32], firstMap[32], lineData[32], getNextMap,
+	i, filename[48], foundMap;
+	get_mapname(currentMap,31);
+
+	new file = fopen(mapCycleFile,"rt");
+	while(file && !feof(file))
 	{
-		new currentMap[32], firstMap[32], lineData[32], getNextMap,
-		i, filename[48], foundMap;
-		get_mapname(currentMap,31);
+		fgets(file,lineData,31);
 
-		new file = fopen(mapCycleFile,"rt");
-		while(file && !feof(file))
+		trim(lineData);
+		replace_all(lineData,31,"^t"," ");
+		replace(lineData,31,".bsp",""); // remove extension
+
+		// stop at a comment
+		for(i=0;i<strlen(lineData)-2;i++)
 		{
-			fgets(file,lineData,31);
-
-			trim(lineData);
-			replace_all(lineData,31,"^t"," ");
-			replace(lineData,31,".bsp",""); // remove extension
-
-			// stop at a comment
-			for(i=0;i<strlen(lineData)-2;i++)
+			// supports config-style (;) and coding-style (//)
+			if(lineData[i] == ';' || (lineData[i] == '/' && lineData[i+1] == '/'))
 			{
-				// supports config-style (;) and coding-style (//)
-				if(lineData[i] == ';' || (lineData[i] == '/' && lineData[i+1] == '/'))
-				{
-					copy(lineData,i,lineData);
-					break;
-				}
-			}
-
-			trim(lineData);
-			if(!lineData[0]) continue;
-
-			// invalid map
-			formatex(filename,47,"maps/%s.bsp",lineData);
-			if(!file_exists(filename)) continue;
-
-			// save first map
-			if(!firstMap[0]) formatex(firstMap,31,"%s",lineData);
-
-			// we found our current map, go to next one
-			if(equali(currentMap,lineData))
-			{
-				getNextMap = 1;
-				continue;
-			}
-
-			// we are looking for the next map, go to it
-			if(getNextMap)
-			{
-				foundMap = 1;
-				server_cmd("changelevel %s",lineData);
+				copy(lineData,i,lineData);
 				break;
 			}
 		}
-		if(file) fclose(file);
 
-		// we didn't find next map
-		if(!foundMap)
+		trim(lineData);
+		if(!lineData[0]) continue;
+
+		// invalid map
+		formatex(filename,47,"maps/%s.bsp",lineData);
+		if(!file_exists(filename)) continue;
+
+		// save first map
+		if(!firstMap[0]) formatex(firstMap,31,"%s",lineData);
+
+		// we found our current map, go to next one
+		if(equali(currentMap,lineData))
 		{
-			// no maps listed, go to current
-			if(!firstMap[0]) server_cmd("changelevel %s",currentMap);
+			getNextMap = 1;
+			continue;
+		}
 
-			// go to first map listed
-			else server_cmd("changelevel %s",firstMap);
+		// we are looking for the next map, go to it
+		if(getNextMap)
+		{
+			foundMap = 1;
+			set_cvar_string("amx_nextmap",lineData);
+			break;
 		}
 	}
-	else
+	if(file) fclose(file);
+
+	// we didn't find next map
+	if(!foundMap)
+	{
+		// no maps listed, go to current
+		if(!firstMap[0]) set_cvar_string("amx_nextmap",currentMap);
+
+		// go to first map listed
+		else set_cvar_string("amx_nextmap",firstMap);
+	}
+}
+
+// go to amx_nextmap
+public goto_nextmap()
+{
+	set_nextmap(); // for good measure
+
+	new mapCycleFile[64];
+	get_gg_mapcycle_file(mapCycleFile,63);
+
+	// no gungame mapcycle
+	if(!mapCycleFile[0] || !file_exists(mapCycleFile))
 	{
 		new custom[256];
 		get_pcvar_string(gg_changelevel_custom,custom,255);
-		trim(custom);
 
-		if(custom[0]) server_cmd(custom);
-		else
+		// try custom changelevel command
+		if(custom[0])
 		{
-			new nextMap[32];
-			get_cvar_string("amx_nextmap",nextMap,31);
-			server_cmd("changelevel %s",nextMap);
+			server_cmd(custom);
+			return;
 		}
 	}
+
+	// otherwise, go to amx_nextmap
+	new nextMap[32];
+	get_cvar_string("amx_nextmap",nextMap,31);
+	server_cmd("changelevel %s",nextMap);
 }
 
 // weapon display
@@ -4361,7 +4659,7 @@ stock status_display(id,status=1)
 	// kill display
 	else if(sdisplay == STATUS_KILLSLEFT)
 	{
-		new goal = get_weapon_goal(weapon[id]);
+		new goal = get_level_goal(level[id]);
 		formatex(sprite,31,"number_%i",goal-score[id]);
 	}
 	else if(sdisplay == STATUS_KILLSDONE)
@@ -4530,7 +4828,7 @@ stock str_find_num(str[],searchchar,number)
 // gets a player id that triggered certain logevents, by VEN
 stock get_loguser_index()
 {
-	new loguser[80], name[32];
+	static loguser[80], name[32];
 	read_logargv(0,loguser,79);
 	parse_loguser(loguser,name,31);
 
@@ -4567,7 +4865,7 @@ stock get_weapon_category(id=0,name[]="")
 }
 
 // if a player is allowed to score (at least 1 player on opposite team)
-public can_score(id)
+can_score(id)
 {
 	new CsTeams:team = cs_get_user_team(id);
 

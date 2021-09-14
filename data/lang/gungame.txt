@@ -24,6 +24,7 @@ NONE = none
 NO_WIN_LOGGING = This server has win logging disabled
 NOW_ON_LEVEL = You are now on level
 ON_LEVEL = You are on level
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e reset himself back to level %%g1%%e
 POINTS = points
 PRESS_KEY_TO_CONTINUE = Press any number key to continue
@@ -85,7 +86,6 @@ Type !score to get a list of all players scores and winnings in your console^n
 :
 WINS = wins
 WON = won
-YES = Yes
 
 [ls]
 CANCEL = C4Nc31
@@ -113,6 +113,7 @@ NONE = N0N3
 NO_WIN_LOGGING = Th!$ $3|2\/3|2 h4$ w!|\| 10gg!|\|g |)!$4|313|)
 NOW_ON_LEVEL = J00 4|23 |\|0w 0|\| 13\/31
 ON_LEVEL = J00 4|23 0N 13V31
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e |23$3+ h!m$31|= |34ck +0 13\/31 %%g1%%e
 POINTS = p0!ntz
 PRESS_KEY_TO_CONTINUE = P|23$$ 4|\|y |\|um|33|2 k3y +0 c0|\|+!|\|u3
@@ -174,7 +175,6 @@ Typ3 !$c0|23 +0 g3+ 4 1!$+ 0|= 411 p14y3|2$ $c0|23$ 4N|) w!NN!Ng$ !N J00|2 c0N$0
 :
 WINS = w!N$
 WON = w0|\|
-YES = Y3$
 
 [de]
 CANCEL = Abbruch
@@ -202,6 +202,7 @@ NONE = nichts
 NO_WIN_LOGGING = Dieser Server hat die Sieges-Protokollierung deaktiviert
 NOW_ON_LEVEL = Du bist jetzt auf Level
 ON_LEVEL = Du bist auf Level
+PLAY_GUNGAME = GunGame spielen?
 PLAYER_RESET = %%n%s%%e hat sich selbst auf Level %%g1%%e zurueckgesetzt
 POINTS = Punkte
 PRESS_KEY_TO_CONTINUE = Druecke eine Nummerntaste um fortzufahren
@@ -263,7 +264,6 @@ Tippe !score um eine Liste von allen Spielern, Punkten und Gewinnen in Deiner Ko
 :
 WINS = Siege
 WON = gewinnt
-YES = Ja
 
 [nl]
 CANCEL = Anuleer
@@ -291,6 +291,7 @@ NONE = Geen
 NO_WIN_LOGGING = De server heefd win logging afgezet
 NOW_ON_LEVEL = Je level is nu
 ON_LEVEL = Je bent op level
+PLAY_GUNGAME = Speel GunGame?
 PLAYER_RESET = %%n%s%%e zijn level staat terug op%%g1%%e
 POINTS = punten
 PRESS_KEY_TO_CONTINUE = Druk op een toets om verder te doen
@@ -351,7 +352,6 @@ Type !score om een lijst van alle scores te zien in je console^n
 :
 WINS = winnen
 WON = gewonnen
-YES = Ja
 
 [fr]
 CANCEL = Annuler
@@ -379,6 +379,7 @@ NONE = aucun
 NO_WIN_LOGGING = Ce serveur n'archive pas les gagnants du jeu
 NOW_ON_LEVEL = Tu es maintenant au niveau
 ON_LEVEL = Tu es au niveau
+PLAY_GUNGAME = Veux-tu jouer au mode GunGame?
 PLAYER_RESET = %%n%s%%e revient de lui-meme au niveau %%g1%%e
 POINTS = points
 PRESS_KEY_TO_CONTINUE = Appuie sur n'importe quelle touche numerique pour continuer...
@@ -440,7 +441,6 @@ Tape !score pour afficher la liste des scores de tous les joueurs et des gagnant
 :
 WINS = gagne
 WON = gagne la partie
-YES = Oui
 
 [cn]
 CANCEL = 取消
@@ -464,10 +464,12 @@ LEVEL_MESSAGE_LINE4B = 当前领先者: %s
 LEVEL_MESSAGE_LINE5 = 当前领先者级别: %i (%s)
 LEVELS_BEHIND_LEADER = 你比领先的落后 %%g%i%%e 级别
 NEXT = 下一个
+NO = 否
 NONE = 无
 NO_WIN_LOGGING = 服务器当前禁止日志
 NOW_ON_LEVEL = 你的当前级别
 ON_LEVEL = 你的当前级别
+PLAY_GUNGAME = 启动 GunGame 模式?
 PLAYER_RESET = %%n%s%%e 重置自己的成绩返回到级别 %%g1%%e
 POINTS = 分
 PRESS_KEY_TO_CONTINUE = 按任意数字键继续
@@ -557,6 +559,7 @@ NONE = nenhum
 NO_WIN_LOGGING = Este servidor tem logging desabilitado
 NOW_ON_LEVEL = Voce esta agora no posto
 ON_LEVEL = Voce esta no posto
+PLAY_GUNGAME = Jogar GunGame?
 PLAYER_RESET = %%n%s%%e decidiu voltar para o nivel %%g1%%e
 POINTS = pontos
 PRESS_KEY_TO_CONTINUE = Pressione quaquer numero para continuar
@@ -618,7 +621,6 @@ Digite !score para ver uma lista de todos os jogadores e vitoriasa no seu consol
 :
 WINS = vitorias 
 WON = ganhou
-YES = Sim
 
 [es]
 CANCEL = Cancelar
@@ -646,6 +648,7 @@ NONE = Ninguno
 NO_WIN_LOGGING = Servidor con Logeo desactivado
 NOW_ON_LEVEL = Ahora estas en nivel
 ON_LEVEL = Estas en el nivel
+PLAY_GUNGAME = ¿Jugar GunGame?
 PLAYER_RESET = %%n%s%%e ha vuelto al nivel %%g1%%e
 POINTS = puntos
 PRESS_KEY_TO_CONTINUE = Presiona cualquier numero para continuar
@@ -707,7 +710,6 @@ Escribe !score para ver el puntajes de todos los jugadores.^n
 :
 WINS = Vistorias
 WON = ganado
-YES = Si
 
 [sv]
 CANCEL = Avbryt
@@ -735,6 +737,7 @@ NONE = ingen
 NO_WIN_LOGGING = Denna server har vunnit inloggning nekad
 NOW_ON_LEVEL = Du 'a'r nu i niva
 ON_LEVEL = Du 'a'r i niva
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e restartade sig sj'a'lv till niva %%g1%%e
 POINTS = po'a'ng
 PRESS_KEY_TO_CONTINUE = Tryck in en seriekod f'o'r att forts'a'tta
@@ -796,7 +799,6 @@ Type !score f'o'r att se alla spelares resultat och vinster i din konsole^n
 :
 WINS = vinster
 WON = vann
-YES = Ja
 
 [fi]
 CANCEL = Peruuta
@@ -824,6 +826,7 @@ NONE = ei mit'a'a'n
 NO_WIN_LOGGING = Voittojen logaus ei ole k'a'ytoss'a' t'a'll'a' servulla
 NOW_ON_LEVEL = Olet nyt tasolla
 ON_LEVEL = Olet tasolla
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e resetoi itsens'a' takaisin tasolle %%g1%%e
 POINTS = pistett'a'
 PRESS_KEY_TO_CONTINUE = Paina jotain numeron'a'pp'a'int'a' jatkaaksesi
@@ -885,7 +888,6 @@ Kirjoitamalla !score n'a'et pistetilastot voittajista ja h'a'vij'a'jist'a'^n
 :
 WINS = voitot
 WON = voitto
-YES = Kyll'a'
 
 [ro]
 CANCEL = Anuleaza
@@ -909,10 +911,12 @@ LEVEL_MESSAGE_LINE4B = Lider acum: %s
 LEVEL_MESSAGE_LINE5 = Nivelul liderului: %i (%s)
 LEVELS_BEHIND_LEADER = Esti cu %%g%i%%e nivele in spatele liderului
 NEXT = Urmatorul
+NO = Nu
 NONE = nimic
 NO_WIN_LOGGING = Acest server nu salveaza castigarea
 NOW_ON_LEVEL = Esti la nivelul
 ON_LEVEL = Esti la nivelul
+PLAY_GUNGAME = Joci GunGame?
 PLAYER_RESET = %%n%s%%e si-a resetat nivelul intorcandu-se la nivelul %%g1%%e
 POINTS = puncte
 PRESS_KEY_TO_CONTINUE = Apasa orice numar pentru a continua
@@ -982,8 +986,8 @@ CLOSE = Close
 FRIENDLYFIRE_ON = %%gFriendly Fire is ON!!!%%e Pas paa ikke at skyde dine holdkammerater!
 GAINED_POINTS = Du er lige avanceret med %%g%i%%e points (%%g%i%%e total)!
 GUNGAME = GunGame
-HK_LEVEL_DOWN = %%n%s%%e went back down to level %%g%i%%e for killing a hostage
-HK_SCORE_DOWN = %%n%s%%e lost %%g%i%%e points for killing a hostage
+HK_LEVEL_DOWN = %%n%s%%e blev sat tilbage til niveau %%g%i%%e for at slaa et gidsel ihjel
+HK_SCORE_DOWN = %%n%s%%e tabte %%g%i%%e points for at slaa et gidsel ihjel
 KNIVES_ONLY = KUN KNIV
 LEADING_ON_LEVEL = %%n%s%%e fQrer paa niveau %%g%i%%e :: %%g%s%%e
 LEVEL = Niveau
@@ -1002,6 +1006,7 @@ NONE = Intet/ingen
 NO_WIN_LOGGING = Denne server gemmer/husker ikke data om vundne spil
 NOW_ON_LEVEL = Du er nu paa niveau
 ON_LEVEL = Du er paa niveau
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e nul stiller dit nuvaerende niveau %%g1%%e
 POINTS = points
 PRESS_KEY_TO_CONTINUE = Tryk en tast for at fortsaette
@@ -1062,7 +1067,6 @@ Skriv !score for at se alle spilleres nuvaerende score i din consol^n
 :
 WINS = wins
 WON = won
-YES = Yes
 
 [ru]
 CANCEL = Îòìåíà
@@ -1086,10 +1090,12 @@ LEVEL_MESSAGE_LINE4B = Íûíåøíèé ëèäåð: %s
 LEVEL_MESSAGE_LINE5 = Óðîâåíü ëèäåðà: %i (%s)
 LEVELS_BEHIND_LEADER = Ñåé÷àñ âû íà %%g%i%%e óðîâíåé îòñòà¸òå îò ëèäåðà
 NEXT = Ñëåäóþùàÿ
+NO = No
 NONE = Íèêàêóþ
 NO_WIN_LOGGING = Ëîã ïîáåä íà ñåðâåðå îòêëþ÷åí
 NOW_ON_LEVEL = Âàø íûíåøíèé óðîâåíü
 ON_LEVEL = Âàø óðîâåíü
+PLAY_GUNGAME = Play GunGame?
 PLAYER_RESET = %%n%s%%e ñáðîñèë ñâîé óðîâåíü äî óðîâíÿ %%g1%%e
 POINTS = Î÷êè
 PRESS_KEY_TO_CONTINUE = Íàæìèòå ëþáóþ öèôðîâóþ êëàâèøó, ÷òîáû ïðîäîëæèòü
@@ -1152,3 +1158,92 @@ WELCOME_MESSAGE_LINE5 :
 WINS = ïîáåä
 WON = ïîáåäèëè
 YES = äà ¸ïò
+
+[pl]
+CANCEL = Anuluj
+CLOSE = Zamknij
+FRIENDLYFIRE_ON = %%gFriendly Fire jest WLACZONY!!!%%e Uwazaj jak strzelasz!
+GAINED_POINTS = Wlasnie zdobyles %%g%i%%e puntow (%%g%i%%e wszystkich)!
+GUNGAME = GunGame
+HK_LEVEL_DOWN = %%n%s%%e spadl do poziomu %%g%i%%e za zabicie zakladnika
+HK_SCORE_DOWN = %%n%s%%e stracil %%g%i%%e punktow za zabicie zakladnika
+KNIVES_ONLY = TYLKO NOZE
+LEADING_ON_LEVEL = %%n%s%%e jest liderem na poziomie %%g%i%%e :: %%g%s%%e
+LEVEL = Poziom
+LEVEL_MESSAGE_LINE1 = Wykonales %i/%i z potrzebnych zabojstw
+LEVEL_MESSAGE_LINE2A = Jestes na prowadzeniu
+LEVEL_MESSAGE_LINE2B = Wyszedles na prowadzenie
+LEVEL_MESSAGE_LINE2C = Jestes %i poziomow za liderem
+LEVEL_MESSAGE_LINE3A = Wygrales %i razy
+LEVEL_MESSAGE_LINE3B = Zdobyles %i punktow
+LEVEL_MESSAGE_LINE4A = Aktualni liderzy: %s
+LEVEL_MESSAGE_LINE4B = Aktualny lider: %s
+LEVEL_MESSAGE_LINE5 = Poziom lidera: %i (%s)
+LEVELS_BEHIND_LEADER = Jestes teraz %%g%i%%e poziomow za liderem
+NEXT = Dalej
+NONE = brak
+NO_WIN_LOGGING = Na tym serwerze logi zwyciestw zostaly wylaczone
+NOW_ON_LEVEL = Jestes teraz na poziomie
+ON_LEVEL = Jestes na poziomie
+PLAY_GUNGAME = Play GunGame?
+PLAYER_RESET = %%n%s%%e zresetowal sie do poziomu %%g1%%e
+POINTS = punkty
+PRESS_KEY_TO_CONTINUE = Nacisnij dowolny klawisz aby kontynuowac
+PREVIOUS = Wstecz
+PROGRESS_DISPLAY = Potrzebujesz %%n%i%%e zabojstw by awansowac Wynik: %%n%i / %i%%e
+PRUNING = Pruning %s: %i entries removed
+REQUIRED_KILLS = Wymagane zabojstwa
+RESET_QUERY = Czy NA PEWNO chcesz^n zresetowac sie do poziomu 1?
+RESPAWN_COUNTDOWN = Odzyjesz za %i sekund
+RULES = Zasady
+RULES_CONSOLE_LINE1 = %i) Musisz wykonac zabojstwo obecna bronia by zdobyc poziom
+RULES_CONSOLE_LINE2 = %i) Jesli wykonasz zabojstwo bronia niezgodnie z kolejnoscia, nie zostanie to uznane i pozostaniesz na obecnym poziomie.
+RULES_CONSOLE_LINE3 = %i) Mozesz zdobywac poziomy przez podkladanie bomby i jej rozbrajanie.
+RULES_CONSOLE_LINE4 = %i) Jesli popelnisz samobojstwo stracisz poziom.
+RULES_CONSOLE_LINE5 = %i) Friendly Fire zostaje WLACZONY gdy ktos osiagnie poziom GRANATOW.
+RULES_CONSOLE_LINE6A = %i) Mozesz zdobywac wiecej niz 1 poziom w czasie jednej rundy.
+RULES_CONSOLE_LINE6B = %i) Mozesz zdobywac jeden poziom na runde.
+RULES_CONSOLE_LINE6C = %i) Mozesz zdobywac %i poziomow na runde.
+RULES_CONSOLE_LINE7 = %i) Jest zaszczytna mozliwosc na koncu kazdej rundy, pozwalajaca graczom zmieniac druzyny.
+RULES_CONSOLE_LINE8 = %i) Poniewaz Knife Pro jest zalaczone, mozesz UKRASC przeciwnikowi poziom zabijajac go nozem.
+RULES_CONSOLE_LINE9 = %i) Poniewaz Turbo Mode jest wlaczony, otrzymasz nowa bron od razu po zdobyciu kolejnego poziomu.
+RULES_CONSOLE_LINE10 = %i) Poniewaz Deathmatch Mode jest wlaczony, bedziesz ciagle odzywal.
+RULES_CONSOLE_LINE11 = Wpisz w say !level by zobaczyc aktualny poziom i sprawdzic kto wygrywa.
+RULES_CONSOLE_LINE12 = Wpisz w say !weapons by zobaczyc kolejnosc broni.
+RULES_CONSOLE_LINE13 = Wpisz w say !score by zobaczyc aktualna punktacje graczy.
+RULES_CONSOLE_LINE14 = Wpisz w say !top10 by zobaczyc najlepszych 10 graczy na serwerze.
+RULES_CONSOLE_LINE15 = Wpisz w say !restart by zresetowac poziom do pierwszego.
+RULES_MESSAGE_LINE1 = Zasady i komendy say sa wyswietlone aktualnie w konsoli.
+RULES_MESSAGE_LINE2 = Niektore przydatne komendy:
+RULES_MESSAGE_LINE3 :
+Wpisz w say !top10 by zobaczyc najlepszych 10 graczy na serwerze^n
+Wpisz w say !level by zobaczyc aktualny poziom i sprawdzic kto wygrywa^n
+Wpisz w say !weapons by zobaczyc kolejnosc broni^n
+Wpisz w say !score by zobaczyc aktualna punktacje graczy
+:
+SCORES = Punktacja
+SLOW_DOWN = Zwolnij! To jest ciagle rozgrzewka!
+SPAWNPROTECTED_KILL = Twoje zabojstwo nie zostalo zaliczone poniewaz %%n%s%%e odrodzil sie w ciaglu ostatnich %%g%i%%e sekund
+STILL_LEVEL_ONE = Nie przekroczyłeś jeszcze nawet 1 poziomu!
+STOLE_LEVEL = %%n%s%%e ukradl poziom od %%g%s%%e
+SUICIDE_LEVEL_DOWN = %%n%s%%e stracil poziom za samobojstwo
+TIED_LEADER = %%n%s%%e obiol prowadzenie!
+TK_LEVEL_DOWN = %%n%s%%e spadl do poziomu %%g%i%%e za Team Kill
+TK_SCORE_DOWN = %%n%s%%e stracil %%g%i%%e punktow za Team Kill
+TOP_10 = Top 10
+TRIPLE_LEVELED = %%n%s%%e przeskoczyl 3 poziomy!!!
+WARMUP_ROUND = Runda rozgrzewkowa
+WARMUP_ROUND_OVER = Koniec rundy rozgrzewkowej!
+WARMUP_ROUND_DISPLAY = Runda rozgrzewkowa: %i sekund do konca
+WEAPONS = Bronie
+WELCOME_MESSAGE_LINE1 = Na tym serwerze dziala GunGame %s by Avalanche
+WELCOME_MESSAGE_LINE2 = Knife Pro jest \rENABLED!\w
+WELCOME_MESSAGE_LINE3 = Turbo Mode jest \rENABLED!\w
+WELCOME_MESSAGE_LINE4 = Deathmatch Mode jest \rENABLED!\w
+WELCOME_MESSAGE_LINE5 :
+Wpisz !rules by dostac wskazowki jak grac i liste przydatnych komend^n
+Wpisz !level by zobaczyc swoj poziom i sprawdzic kto wygrywa^n
+Wpisz !score by otrzymac punktacje graczy i wygrane w konsoli^n
+:
+WINS = zwyciestw
+WON = zwyciezyl

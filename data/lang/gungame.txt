@@ -273,7 +273,7 @@ GAINED_POINTS = Je hebt juist%%g%i%%e punten gekregen (%%g%i%%e total)!
 GUNGAME = GunGame
 HK_LEVEL_DOWN = %%n%s%%e ging terug naar level %%g%i%%e voor het doden van een hostage
 HK_SCORE_DOWN = %%n%s%%e verloor %%g%i%%e punten voor het doden van een hostage
-KNIVES_ONLY = KNIFE ALEEN
+KNIVES_ONLY = KNIFE ALLEEN
 LEADING_ON_LEVEL = %%n%s%%e is aan de leiding op level%%g%i%%e :: %%g%s%%e
 LEVEL = Level
 LEVEL_MESSAGE_LINE1 = Je hebt %i/%i gemaakt van je gevraagde kills
@@ -713,10 +713,10 @@ YES = Si
 CANCEL = Avbryt
 CLOSE = St'a'ng
 FRIENDLYFIRE_ON = %%CV'a'nskaplig Eld 'a'r aktiverad!!!%%e Var f'o'rsiktig!!!
-GAINED_POINTS = Du har just fatt %%g%i%%e po'a'ng (%%g%i%%e totalt)!
+GAINED_POINTS = Du befodrades nyss till %%g%i%%e po'a'ng (%%g%i%%e totalt)!
 GUNGAME = GunGame
-HK_LEVEL_DOWN = %%n%s%%e gick ner till niva %%g%i%%e f'o'r att ha d'o'dat en gissla
-HK_SCORE_DOWN = %%n%s%%e f'o'rlorade %%g%i%%e po'a'ng f'o'r att ha d'o'dat en gissla
+HK_LEVEL_DOWN = %%n%s%%e degraderades till level %%g%i%%e f'o'r att ha d'o'dat en i gisslan
+HK_SCORE_DOWN = %%n%s%%e f'o'rlorade %%g%i%%e po'a'ng f'o'r att ha d'o'dat en i gisslan
 KNIVES_ONLY = Endast kniv
 LEADING_ON_LEVEL = %%n%s%%e leder pa niva %%g%i%%e :: %%g%s%%e
 LEVEL = Niva
@@ -725,7 +725,7 @@ LEVEL_MESSAGE_LINE2A = Du leder
 LEVEL_MESSAGE_LINE2B = Du 'a'r bunden vid f'o'rsta plats
 LEVEL_MESSAGE_LINE2C = Du 'a'r %i nivaer efter den som leder
 LEVEL_MESSAGE_LINE3A = Du har vunnit %i ganger
-LEVEL_MESSAGE_LINE3B = Du har sammanlagt %i po'a'ng
+LEVEL_MESSAGE_LINE3B = Du har samlat ihop %i po'a'ng
 LEVEL_MESSAGE_LINE4A = Nuvarande ledare: %s
 LEVEL_MESSAGE_LINE4B = Nuvarande ledare: %s
 LEVEL_MESSAGE_LINE5 = Den som leder 'a'r i niva: %i (%s)
@@ -893,8 +893,8 @@ CLOSE = Inchide
 FRIENDLYFIRE_ON = %%gFriendly Fire este ON!!!%%e Ai grija in cine tragi!
 GAINED_POINTS = Tocmai ai acumulat %%g%i%%e puncte (Total %%g%i%%e)!
 GUNGAME = GunGame
-HK_LEVEL_DOWN = %%n%s%%e went back down to level %%g%i%%e for killing a hostage
-HK_SCORE_DOWN = %%n%s%%e lost %%g%i%%e points for killing a hostage
+HK_LEVEL_DOWN = %%n%s%%e s-a intors cu un level mai jos %%g%i%%e pentru ca a omorat un ostatec
+HK_SCORE_DOWN = %%n%s%%e a pierdut %%g%i%%e puncte pentru ca a omorat un ostatec
 KNIVES_ONLY = DOARE CUTITE
 LEADING_ON_LEVEL = %%n%s%%e a crescut la nivelul %%g%i%%e :: %%g%s%%e
 LEVEL = Nivel
@@ -1013,10 +1013,13 @@ RESET_QUERY = Er du sikker paa at du vil starte forfra paa level 1?
 RESPAWN_COUNTDOWN = Du genstarter i spawn om %i sekunder
 RULES = Regler
 RULES_CONSOLE_LINE1 = %i) Du skal draebe en modspiller fQr du kan avancere til naeste niveau.
-RULES_CONSOLE_LINE2 = %i) Hvis du draeber en med et vaaben uden for den normale vaeben raekkefQlge, virker det ikke og du forbliver paa dit nuvaerende niveau. RULES_CONSOLE_LINE3 = %i) Du kan avancere ved at plante eller defuse bomben.
+RULES_CONSOLE_LINE2 = %i) Hvis du draeber en med et vaaben uden for den normale vaeben raekkefQlge, virker det ikke og du forbliver paa dit nuvaerende niveau.
+RULES_CONSOLE_LINE3 = %i) Du kan avancere ved at plante eller defuse bomben.
 RULES_CONSOLE_LINE4 = %i) Begaar du selvmord mister du et niveau.
 RULES_CONSOLE_LINE5 = %i) Friendly Fire saettes automatisk igang naar en spiller naar til GRANAT niveau.
-RULES_CONSOLE_LINE6A = %i) Du kan avancere flere niveauer i en runde. RULES_CONSOLE_LINE6B = %i) Du kan kun avancere et niveau pr runde. RULES_CONSOLE_LINE6C = %i) Du kan avancere op til %i niveauer pr runde.
+RULES_CONSOLE_LINE6A = %i) Du kan avancere flere niveauer i en runde.
+RULES_CONSOLE_LINE6B = %i) Du kan kun avancere et niveau pr runde.
+RULES_CONSOLE_LINE6C = %i) Du kan avancere op til %i niveauer pr runde.
 RULES_CONSOLE_LINE7 = %i) Der er en inaktiv periode efter hver runde hvor spillere kan bytte hold.
 RULES_CONSOLE_LINE8 = %i) Fordi Knife Pro indstillingen er aktiv, kan du stjaele et niveau fra en modspiller ved at draebe dem med kniv.
 RULES_CONSOLE_LINE9 = %i) Fordi Turbo Mode indstillingen er aktiv , faar du et nyt vaaben starks efter at du stiger et niveau.
@@ -1060,3 +1063,92 @@ Skriv !score for at se alle spilleres nuvaerende score i din consol^n
 WINS = wins
 WON = won
 YES = Yes
+
+[ru]
+CANCEL = Îòìåíà
+CLOSE = Çàêðûòü
+FRIENDLYFIRE_ON = %%gFriendly Fire ÂÊËÞ×ÅÍ!!!%%e Íå ïàëè ïî ñâîèì!!!
+GAINED_POINTS = Âû òîëüêî ÷òî ïîëó÷èëè %%g%i%%e î÷êîâ (%%g%i%%e â îáùåì)!
+GUNGAME = GunGame
+HK_LEVEL_DOWN = %%n%s%%e îïóñòèëñÿ íà óðîâåíü %%g%i%%e óáèâ çàëîæíèêà
+HK_SCORE_DOWN = %%n%s%%e ïîòåðÿë %%g%i%%e î÷êîâ óáèâ çàëîæíèêà
+KNIVES_ONLY = òîëüêî íà íîæàõ
+LEADING_ON_LEVEL = %%n%s%%e ëèäèðóåò ñ óðîâíåì %%g%i%%e :: %%g%s%%e
+LEVEL = Óðîâåíü
+LEVEL_MESSAGE_LINE1 = Âû âûïîëíèëè %i/%i èç íåîáõîáõîäèìûõ óáèéñòâ
+LEVEL_MESSAGE_LINE2A = Âû ëèäèðóåòå
+LEVEL_MESSAGE_LINE2B = Âû ïðåòåíäóåòå íà çâàíèå ëèäåðà
+LEVEL_MESSAGE_LINE2C = Âû íà %i óðîâíåé îòñòà¸òå îò ëèäåðà
+LEVEL_MESSAGE_LINE3A = Âû ïîïåäèëè %i ðàç
+LEVEL_MESSAGE_LINE3B = Âû íàáðàëè %i î÷êîâ
+LEVEL_MESSAGE_LINE4A = Íûíåøíèå ëèäåðû: %s
+LEVEL_MESSAGE_LINE4B = Íûíåøíèé ëèäåð: %s
+LEVEL_MESSAGE_LINE5 = Óðîâåíü ëèäåðà: %i (%s)
+LEVELS_BEHIND_LEADER = Ñåé÷àñ âû íà %%g%i%%e óðîâíåé îòñòà¸òå îò ëèäåðà
+NEXT = Ñëåäóþùàÿ
+NONE = Íèêàêóþ
+NO_WIN_LOGGING = Ëîã ïîáåä íà ñåðâåðå îòêëþ÷åí
+NOW_ON_LEVEL = Âàø íûíåøíèé óðîâåíü
+ON_LEVEL = Âàø óðîâåíü
+PLAYER_RESET = %%n%s%%e ñáðîñèë ñâîé óðîâåíü äî óðîâíÿ %%g1%%e
+POINTS = Î÷êè
+PRESS_KEY_TO_CONTINUE = Íàæìèòå ëþáóþ öèôðîâóþ êëàâèøó, ÷òîáû ïðîäîëæèòü
+PREVIOUS = Ïðåäûäóùèé
+PROGRESS_DISPLAY = Âàì òðåáóåòñÿ %%n%i%%e óáèéñòâ äëÿ ïîâûøåíèÿ óðîâíÿ. Ñ÷¸ò: %%n%i / %i%%e
+PRUNING = Ëèøíèå %s: %i çàïèñåé óäàëåíû
+REQUIRED_KILLS = Íåîáõîäèìî óáèéñòâ
+RESET_QUERY = Âû ÓÂÅÐÅÍÛ ^n÷òî õîòèòå ñáðîñèòü ñâîé óðîâåíü äî íà÷àëüíîãî?
+RESPAWN_COUNTDOWN = Âû ïîÿâèòåñü ÷åðåç %i ñåêóíä
+RULES = Ïðàâèëà
+RULES_CONSOLE_LINE1 = %i) Âû äîëæíû ñîâåðøèòü óáèéñòâî ñ âàøèì íûíåøíèì îðóæèåì, ÷òîáû ïîâûñèòü óðîâåíü.
+RULES_CONSOLE_LINE2 = %i) Åñëè âû ñîâåðøàåòå óáèéñòâî ñ äðóãèì îðóæèåì, òî óáèéñòâî íå çàñ÷èòûâàåòñÿ è óðîâåíü íå ïîâûøàåòñÿ.
+RULES_CONSOLE_LINE3 = %i) Âû ìîæåòå ïîâûñèòü óðîâåíü ÇÀÌÈÍÈÐÎÂÀÂ èëè ÐÀÇÌÈÍÈÐÎÂÀÂ áîìáó.
+RULES_CONSOLE_LINE4 = %i) Ñîâåðøèâ ñàìîóáèéñòâî, òåðÿåøü îäèí óðîâåíü.
+RULES_CONSOLE_LINE5 = %i) Friendly Fire ÂÊËÞ×ÀÅÒÑß êîãäà êòî-íèáóäü äîñòèãàåò óðîâíÿ ñ ÃÐÀÍÀÒÀÌÈ.
+RULES_CONSOLE_LINE6A = %i) Âû ìîæåòå ïîâûøàòü óðîâåíü áîëåå îäíîãî ðàçà çà ðàóíä.
+RULES_CONSOLE_LINE6B = %i) Âû ìîæåòå ïîâûñèò óðîâåíü òîëüêî îäèí ðàç çà ðàóíä.
+RULES_CONSOLE_LINE6C = %i) Âû ìîæåòå çàðàáîòàòü äî %i óðîâíåé çà ðàóíä.
+RULES_CONSOLE_LINE7 = %i) Â êîíöå êàæäîãî ðàóíäà äàåòñÿ âðåìÿ ÷òîáû èãðîêè ìîãëè ïîìåíÿòü êîìàíäó.
+RULES_CONSOLE_LINE8 = %i) Òàê êàê Knife Pro âêëþ÷¸í, âû ìîæåòå óêðàñòü óðîâåíü ó äðóãîãî èãðîêà, çàðåçàâ ýòîãî óáëþäêà.
+RULES_CONSOLE_LINE9 = %i) Òàê êàê Turbo Mode âêëþ÷¸í, âû ïîëó÷èòå ñëåäóþùåå îðóæèå ñðàçó ïîñëå ïîâûøåíèÿ óðîâíÿ.
+RULES_CONSOLE_LINE10 = %i) Òàê êàê Deathmatch Mode âêëþ÷¸í, âû áóäåòå ïîñòîÿííî ðåñïàóíèòñÿ.
+RULES_CONSOLE_LINE11 = Ïèøè !level ÷òîáû ïîñìîòðåòü ñâîé óðîâåíü è êòî ïîáåæäàåò.
+RULES_CONSOLE_LINE12 = Ïèøè !weapons ÷òîáû ïîñìîòðåòü ïîðÿäîê ïîÿâëåíèÿ îðóæèÿ.
+RULES_CONSOLE_LINE13 = Ïèøè !score ÷òîáû ïîñìîòðåòü î÷êè äðóãèõ èãðîêîâ.
+RULES_CONSOLE_LINE14 = Ïèøè !top10 ÷òîáû ïîñìîòðåòü 10 ëó÷øèõ èãðîêîâ ýòîãî ñåðâåðà.
+RULES_CONSOLE_LINE15 = Ïèøè !restart ÷òîáû ñáðîñèòü óðîâåíü äî íà÷àëüíîãî.
+RULES_MESSAGE_LINE1 = Ïðàâèëà èãðû è âñå êîììàíäû òåïåðü ïðèâåäåíû â êîíñîëè
+RULES_MESSAGE_LINE2 = Íåêîòîðûå ïîëåçíûå êîììàíäû:
+RULES_MESSAGE_LINE3 :
+Ïèøè !top10 ÷òîáû ïîñìîòðåòü 10 ëó÷øèõ èãðîêîâ ýòîãî ñåðâåðà^n
+Ïèøè !level ÷òîáû ïîñìîòðåòü ñâîé óðîâåíü è êòî ïîáåæäàåò^n
+Ïèøè !weapons ÷òîáû ïîñìîòðåòü ïîðÿäîê ïîÿâëåíèÿ îðóæèÿ^n
+Ïèøè !score ÷òîáû ïîñìîòðåòü î÷êè äðóãèõ èãðîêîâ^n
+:
+SCORES = Î÷êè
+SLOW_DOWN = Åé!!! Ïðèòîðìîçè!!! Ýòî âñåãî ëèøü ðàçîãðåâî÷íûé ðàóíä!!!
+SPAWNPROTECTED_KILL = Óáèéñòâî íå çàñ÷èòûâàåòñÿ ïîòîìó, ÷òî %%n%s%%e ïîÿâèëñÿ â ïîñëåäíèå %%g%i%%e ñåêóíäû
+STILL_LEVEL_ONE = Åé!!! Òû âñ¸ åùå íà ïåðâîì óðîâíå!!! íóóóóá!!!
+STOLE_LEVEL = %%n%s%%e óêðàë óðîâåíü ó %%g%s%%e
+SUICIDE_LEVEL_DOWN = %%n%s%%e ïîòåðÿë óðîâåíü ñîâåðøèâ ñàìîóáèéñòâî
+TIED_LEADER = %%n%s%%e òåïåðü ëèäåð!
+TK_LEVEL_DOWN = %%n%s%%e îïóñòèëñÿ íà óðîâåíü %%g%i%%e çà óáèéñòâî èãðîêà ñâîåé êîìàíäû
+TK_SCORE_DOWN = %%n%s%%e ïîòåðÿë %%g%i%%e î÷êîâ çà óáèéñòâî èãðîêà ñâîåé êîìàíäû
+TOP_10 = Ëó÷øèå 10 èãðîêîâ
+TRIPLE_LEVELED = %%n%s%%e òðîéíîå ïîâûøåíèå óðîâíÿ!!!
+WARMUP_ROUND = Ðàçîãðåâî÷íûé ðàóíä
+WARMUP_ROUND_OVER = Ðàçîãðåâî÷íûé ðàóíä çàêîí÷åí!
+WARMUP_ROUND_DISPLAY = Ðàçîãðåâî÷íûé ðàóíä: îñòàëîñü %i ñåêóíä
+WEAPONS = Îðóæèå
+WELCOME_MESSAGE_LINE1 = Ýòîò ñåðâåð èñïîëüçóåò GunGame %s by Avalanche
+WELCOME_MESSAGE_LINE2 = Knife Pro \rÂÊËÞ×¨Í!\w
+WELCOME_MESSAGE_LINE3 = Turbo Mode \rÂÊËÞ×¨Í!\w
+WELCOME_MESSAGE_LINE4 = Deathmatch Mode \rÂÊËÞ×¨Í!\w
+WELCOME_MESSAGE_LINE5 :
+Ïèøè !rules äëÿ äàëüíåéøèõ èíñòðóêöèè ïî èãðå è ñïèñêà êîìàíä^n
+Ïèøè !level ÷òîá óçíàòü íà êàêîì òû óðîâíå è êòî ëèäèðóåò^n
+Ïèøè !score ÷òîá ïîëó÷èòü ñïèñîê î÷êîâ è ïîáåä âñåõ èãðîêîâ â êîíñîëè^n
+:
+WINS = ïîáåä
+WON = ïîáåäèëè
+YES = äà ¸ïò

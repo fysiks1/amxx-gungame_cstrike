@@ -15,9 +15,10 @@
 // raa, and SilverDragon. (alphabetically)
 //
 // Thanks especially to all of the translators:
-// arkshine, commonbullet, Curryking, D o o m, Doombringer,
-// Fr3ak0ut, godlike, harbu, jopmako, KylixMynxAltoLAG, TEG,
-// ToT | V!PER, Twilight Suzuka, and webpsiho. (alphabetic)
+// arkshine, b!orn, commonbullet, Curryking, D o o m,
+// Doombringer, Fr3ak0ut, godlike, harbu, jopmako,
+// KylixMynxAltoLAG, TEG, ToT | V!PER, Twilight Suzuka,
+// and webpsiho. (alphabetically)
 
 #include <amxmodx>
 #include <amxmisc>
@@ -26,8 +27,8 @@
 #include <cstrike>
 
 // defines
-#define GG_VERSION		"1.14B"
-#define MAX_SPAWNS		40 // for gg_dm_spawn_random
+#define GG_VERSION		"1.15"
+#define MAX_SPAWNS		60 // for gg_dm_spawn_random
 #define COMMAND_ACCESS		ADMIN_CVAR // for amx_gungame
 #define LANG_PLAYER_C		-76 // for gungame_print
 #define MAX_WEAPON_ORDERS	10 // for random gg_weapon_order
@@ -103,7 +104,7 @@ gg_refill_on_kill, gg_colored_messages, gg_tk_penalty, gg_dm_corpses, gg_save_te
 gg_awp_oneshot, gg_host_touch_reward, gg_host_rescue_reward, gg_host_kill_reward,
 gg_dm_countdown, gg_status_display, gg_dm_spawn_afterplant, gg_block_objectives,
 gg_stats_mode, gg_pickup_others, gg_stats_winbonus, gg_map_iterations, gg_warmup_multi,
-gg_host_kill_penalty;
+gg_host_kill_penalty, gg_dm_start_random, gg_stats_ip;
 
 // max clip
 new const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25, 30, 35, 25,  12,  20,
@@ -113,10 +114,15 @@ new const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25
 new const maxAmmo[31] = { -1, 52, -1, 90, -1, 32, -1, 100, 90, -1, 120, 100, 100, 90, 90, 90, 100, 100,
 			30, 120, 200, 32, 90, 120, 60, -1, 35, 90, 90, -1, 100 };
 
+// weapon slot lookup table
+stock const weaponSlots[] = { 0, 2, 0, 1, 4, 1, 5, 1, 1, 4, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1,
+				1, 4, 2, 1, 1, 3, 1 };
+
 // misc
 new scores_menu, level_menu, bombMap, hostageMap, warmup = -1, len, voted, won, trailSpr, roundEnded,
 weaponOrder[416], menuText[512], dummy[2], tempSave[32][27], c4planter, czero, bombStatus[4], maxPlayers,
-gameStarted, mapIteration = 1, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, cfgDir[32];
+gameStarted, mapIteration = 1, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, cfgDir[32],
+top10[10][81];
 
 // stats file stuff
 new sfFile[64], sfAuthid[24], sfWins[6], sfPoints[8], sfName[32], sfTimestamp[12], sfLineData[81];
@@ -210,6 +216,7 @@ public plugin_init()
 	gg_map_setup = register_cvar("gg_map_setup","mp_timelimit 45; mp_winlimit 0; sv_alltalk 0; mp_chattime 10; mp_c4timer 25");
 	gg_join_msg = register_cvar("gg_join_msg","1");
 	gg_stats_file = register_cvar("gg_stats_file","gungame.stats");
+	gg_stats_ip = register_cvar("gg_stats_ip","0");
 	gg_stats_mode = register_cvar("gg_stats_mode","1");
 	gg_stats_prune = register_cvar("gg_stats_prune","2592000"); // = 60 * 60 * 24 * 30 = 30 days
 	gg_stats_winbonus = register_cvar("gg_stats_winbonus","1.5");
@@ -224,6 +231,7 @@ public plugin_init()
 	gg_dm_sp_time = register_cvar("gg_dm_sp_time","1.0"); // time (in seconds) after spawn for spawn protection
 	gg_dm_sp_mode = register_cvar("gg_dm_sp_mode","1"); // 1: if killed during SP, killer gets no points; 2: invincible during SP
 	gg_dm_spawn_random = register_cvar("gg_dm_spawn_random","0"); // if 1, you will respawn in a random (team-ambiguous) spawn
+	gg_dm_start_random = register_cvar("gg_dm_start_random","1");
 	gg_dm_spawn_delay = register_cvar("gg_dm_spawn_delay","1.5"); // time (in seconds) it takes to respawn after dying
 	gg_dm_spawn_afterplant = register_cvar("gg_dm_spawn_afterplant","1");
 	gg_dm_corpses = register_cvar("gg_dm_corpses","1"); // corpses in deathamtch mode?
@@ -387,7 +395,7 @@ public plugin_init()
 		}
 	}
 
-	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE);
+	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE)
 }
 
 // plugin ends, prune stats file maybe
@@ -478,20 +486,18 @@ public client_authorized(id)
 	get_pcvar_string(gg_stats_file,sfFile,63);
 	trim(sfFile);
 
-	// refresh timestamp if we should
-	if(sfFile[0])
-	{
-		new authid[24];
-		get_user_authid(id,authid,23);
+	static authid[24];
 
-		stats_refresh_timestamp(authid);
-	}
+	if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
+	else get_user_authid(id,authid,23);
+
+	// refresh timestamp if we should
+	if(sfFile[0]) stats_refresh_timestamp(authid);
 
 	// load temporary save
 	if(get_pcvar_num(gg_enabled) && get_pcvar_num(gg_save_temp))
 	{
-		new authid[24], i, save = -1;
-		get_user_authid(id,authid,23);
+		new i, save = -1;
 
 		// find our possible temp save
 		for(i=0;i<32;i++)
@@ -513,6 +519,9 @@ public client_authorized(id)
 		// clear it
 		remove_task(TASK_CLEAR_SAVE+save);
 		tempSave[save][0] = 0;
+
+		// get the name (almost forgot!)
+		get_weapon_name_by_level(level[id],weapon[id],23);
 	}
 }
 
@@ -554,7 +563,9 @@ public client_disconnect(id)
 		// no free, use oldest
 		if(freeSave == -1) freeSave = oldestSave;
 
-		get_user_authid(id,tempSave[freeSave],23);
+		if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,tempSave[freeSave],23);
+		else get_user_authid(id,tempSave[freeSave],23);
+
 		tempSave[freeSave][24] = level[id];
 		tempSave[freeSave][25] = score[id];
 		tempSave[freeSave][26] = floatround(get_gametime());
@@ -781,17 +792,19 @@ public post_resethud(id)
 			// top10 doesn't receive handicap -- also make sure we are using top10
 			if(!get_pcvar_num(gg_top10_handicap) && sfFile[0] && file_exists(sfFile) && get_pcvar_num(gg_stats_mode))
 			{
-				new top10[10][24], i, authid[24];
-				stats_get_top_players(10,top10,23);
-				get_user_authid(id,authid,23);
+				static authid[24];
 
+				if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
+				else get_user_authid(id,authid,23);
+
+				new i;
 				for(i=0;i<10;i++)
 				{
 					// blank
 					if(!top10[i][0]) continue;
 
 					// isolate authid
-					strtok(top10[i],sfAuthid,23,top10[i],1,'^t');
+					strtok(top10[i],sfAuthid,23,dummy,1,'^t');
 
 					// I'm in top10, don't give me handicap
 					if(equal(authid,sfAuthid))
@@ -1044,7 +1057,7 @@ public event_deathmsg()
 		// knife warmup, don't bother leveling up
 		if(warmup > 0 && get_pcvar_num(gg_knife_warmup)) return;
 
-		new killerName[32], victimName[32];
+		static killerName[32], victimName[32];
 		get_user_name(killer,killerName,31);
 		get_user_name(victim,victimName,31);
 
@@ -1146,12 +1159,14 @@ public event_new_round()
 	if(equal(weapon[leader],"hegrenade")) play_sound_by_cvar(0,gg_sound_nade);
 	else if(equal(weapon[leader],"knife")) play_sound_by_cvar(0,gg_sound_knife);
 
-	if(get_pcvar_num(gg_dm) && get_pcvar_num(gg_dm_spawn_random))
-		set_task(0.1,"randomly_place_everyone");
+	// start in random positions at round start
+	new spawn_random = get_pcvar_num(gg_dm_spawn_random);
+	if(get_pcvar_num(gg_dm) && get_pcvar_num(gg_dm_start_random) && spawn_random)
+		set_task(0.1,"randomly_place_everyone",spawn_random);
 }
 
 // what do you think??
-public randomly_place_everyone()
+public randomly_place_everyone(spawn_random)
 {
 	new players[32], num, i, CsTeams:team;
 	get_players(players,num);
@@ -1175,7 +1190,7 @@ public randomly_place_everyone()
 
 		// not spectator or unassigned
 		if(team == CS_TEAM_T || team == CS_TEAM_CT)
-			do_random_spawn(players[i]);
+			do_random_spawn(players[i],spawn_random);
 	}
 }
 
@@ -1843,6 +1858,8 @@ public toggle_gungame(taskid)
 
 		remove_task(TASK_WARMUP_CHECK);
 	}
+
+	stats_get_top_players(10,top10,80);
 }
 
 // run cvars that should be run on map start
@@ -2069,7 +2086,10 @@ public show_level_menu(id)
 	len += formatex(menuText[len],511-len,"\d----------\w^n");
 
 	new authid[24], wins, points;
-	get_user_authid(id,authid,23);
+
+	if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
+	else get_user_authid(id,authid,23);
+
 	stats_get_data(authid,wins,points,dummy,1,dummy[0]);
 
 	new stats_mode = get_pcvar_num(gg_stats_mode);
@@ -2104,12 +2124,10 @@ public show_top10_menu(id)
 	if(page[id] < 1) page[id] = 1;
 	if(page[id] > pageTotal) page[id] = pageTotal;
 
-	new top10[10][81];
-	stats_get_top_players(10,top10,80);
-
 	len = formatex(menuText,511-len,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"TOP_10",page[id],pageTotal);
 	//len += formatex(menuText[len],511-len,"\d-----------\w^n");
 
+	static top10listing[81];
 	new start = (playersPerPage * (page[id]-1)), i;
 
 	for(i=start;i<start+playersPerPage;i++)
@@ -2123,17 +2141,21 @@ public show_top10_menu(id)
 			continue;
 		}
 
+		// assign it to a new variable so that strtok
+		// doesn't tear apart our constant top10 variable
+		top10listing = top10[i];
+
 		// get rid of authid
-		strtok(top10[i],sfAuthid,1,top10[i],80,'^t');
+		strtok(top10listing,sfAuthid,1,top10listing,80,'^t');
 
 		// isolate wins
-		strtok(top10[i],sfWins,5,top10[i],80,'^t');
+		strtok(top10listing,sfWins,5,top10listing,80,'^t');
 
 		// isolate name
-		strtok(top10[i],sfName,31,top10[i],80,'^t');
+		strtok(top10listing,sfName,31,top10listing,80,'^t');
 
 		// break off timestamp and get points
-		strtok(top10[i],sfTimestamp,1,sfPoints,7,'^t');
+		strtok(top10listing,sfTimestamp,1,sfPoints,7,'^t');
 
 		if(stats_mode == 1)
 			len += formatex(menuText[len],511-len,"#%i %s (%s %L)^n",i+1,sfName,sfWins,id,"WINS");
@@ -2291,6 +2313,8 @@ public show_scores_menu(id)
 	get_pcvar_string(gg_stats_file,sfFile,63);
 	trim(sfFile);
 
+	new stats_ip = get_pcvar_num(gg_stats_ip);
+
 	for(i=start;i<start+playersPerPage;i++)
 	{
 		if(i >= totalPlayers) break;
@@ -2299,12 +2323,14 @@ public show_scores_menu(id)
 		get_user_name(player,name,31);
 
 		new displayWeapon[16];
-		if(level[player]) formatex(displayWeapon,15,"%s",weapon[player]);
+		if(level[player] && weapon[player][0]) formatex(displayWeapon,15,"%s",weapon[player]);
 		else formatex(displayWeapon,15,"%L",id,"NONE");
 
 		if(sfFile[0] && stats_mode)
 		{
-			get_user_authid(player,authid,23);
+			if(stats_ip) get_user_ip(player,authid,23);
+			else get_user_authid(player,authid,23);
+
 			stats_get_data(authid,wins,points,dummy,1,dummy[0]);
 
 			len += formatex(menuText[len],511-len,"#%i %s, %L %i (%s), %i %L^n",i+1,name,id,"LEVEL",level[player],displayWeapon,(stats_mode == 1) ? wins : points,id,(stats_mode == 1) ? "WINS" : "POINTS");
@@ -2466,7 +2492,7 @@ public player_suicided(id)
 	// we still have protection (round ended, new one hasn't started yet)
 	if(roundEnded) return;
 
-	new name[32];
+	static name[32];
 	get_user_name(id,name,31);
 
 	gungame_print(0,id,"%L",LANG_PLAYER_C,"SUICIDE_LEVEL_DOWN",name);
@@ -2571,7 +2597,7 @@ stock change_level(id,value,just_joined=0,show_message=1)
 	else play_sound_by_cvar(id,gg_sound_leveldown);
 
 	// grab my name
-	new name[32];
+	static name[32];
 	get_user_name(id,name,31);
 
 	// win???
@@ -2592,6 +2618,8 @@ stock change_level(id,value,just_joined=0,show_message=1)
 
 		return;
 	}
+
+	silenced[id] = 0; // for going to Glock->USP, for example
 
 	// set weapon based on it
 	get_weapon_name_by_level(level[id],weapon[id],23);
@@ -2647,20 +2675,20 @@ stock change_level(id,value,just_joined=0,show_message=1)
 			if(custom[0]) server_cmd(custom);
 			else
 			{
+				new DMM, dmmName[32];
+
 				// Deagles' Map Management 2.30b
 				if(find_plugin_byfile("deagsmapmanage230b.amxx") != INVALID_PLUGIN_ID)
 				{
-					new oldWinLimit = get_cvar_num("mp_winlimit"), Float:oldTimeLimit = get_cvar_float("mp_timelimit");
-					set_cvar_num("mp_winlimit",99999); // don't allow extending
-					set_cvar_float("mp_timelimit",0.0); // don't wait for buying
-					set_cvar_num("enforce_timelimit",1); // don't change map after vote
+					DMM = 1;
+					format(dmmName,31,"deagsmapmanage230b.amxx");
+				}
 
-					// call the vote
-					if(callfunc_begin("startthevote","deagsmapmanage230b.amxx") == 1)
-						callfunc_end();
-
-					set_cvar_num("mp_winlimit",oldWinLimit);
-					set_cvar_float("mp_timelimit",oldTimeLimit);
+				// Deagles' Map Management 2.40
+				else if(find_plugin_byfile("deagsmapmanager.amxx") != INVALID_PLUGIN_ID)
+				{
+					DMM = 1;
+					format(dmmName,31,"deagsmapmanager.amxx");
 				}
 
 				// AMXX Nextmap Chooser
@@ -2680,7 +2708,37 @@ stock change_level(id,value,just_joined=0,show_message=1)
 				}
 
 				// NOTHING?
-				else log_amx("Using gg_vote_setting without mapchooser.amxx or deagsmapmanage230b.amxx, could not start a vote!");
+				else log_amx("Using gg_vote_setting without mapchooser.amxx, deagsmapmanage230b.amxx, or deagsmapmanager.amxx: could not start a vote!");
+
+				// do DMM stuff
+				if(DMM)
+				{
+					// allow voting
+					/*if(callfunc_begin("dmapvotemode",dmmName) == 1)
+					{
+						callfunc_push_int(0); // server
+						callfunc_end();
+					}*/
+
+					new oldWinLimit = get_cvar_num("mp_winlimit"), Float:oldTimeLimit = get_cvar_float("mp_timelimit");
+					set_cvar_num("mp_winlimit",99999); // don't allow extending
+					set_cvar_float("mp_timelimit",0.0); // don't wait for buying
+					set_cvar_num("enforce_timelimit",1); // don't change map after vote
+
+					// call the vote
+					if(callfunc_begin("startthevote",dmmName) == 1)
+						callfunc_end();
+
+					set_cvar_num("mp_winlimit",oldWinLimit);
+					set_cvar_float("mp_timelimit",oldTimeLimit);
+
+					// disallow further voting
+					/*if(callfunc_begin("dmapcyclemode",dmmName) == 1)
+					{
+						callfunc_push_int(0); // server
+						callfunc_end();
+					}*/
+				}
 			}
 		}
 	}
@@ -2823,7 +2881,8 @@ stock give_level_weapon(id,notify=1,verify=1)
 
 	new oldWeapon = get_user_weapon(id,dummy[0],dummy[0]);
 
-	new weapons[32], wpnName[24], wpnid, alright, num, i;
+	static wpnName[24];
+	new weapons[32], wpnid, alright, num, i;
 	get_user_weapons(id,weapons,num);
 
 	new hasMain, hasGlock, hasSmoke, hasFlash;
@@ -2995,8 +3054,10 @@ stock give_level_weapon(id,notify=1,verify=1)
 		}
 	}
 
-	// switch back to knife if we had it out
-	if(oldWeapon == CSW_KNIFE && !notify) client_cmd(id,"weapon_knife");
+	// switch back to knife if we had it out. also don't do this when called
+	// by the verification check, because their old weapon will obviously be
+	// a knife and they will want to use their new one.
+	if(verify && oldWeapon == CSW_KNIFE && !notify) client_cmd(id,"weapon_knife");
 
 	// otherwise, switch to our new weapon
 	else
@@ -3049,9 +3110,9 @@ public verify_weapon(taskid)
 
 	if(!is_user_alive(id)) return;
 
-	new wpnName[24], wpnid;
+	static wpnName[24];
 	formatex(wpnName,23,"weapon_%s",weapon[id]);
-	wpnid = get_weaponid(wpnName);
+	new wpnid = get_weaponid(wpnName);
 
 	if(!wpnid) return;
 
@@ -3136,7 +3197,8 @@ public respawn(taskid)
 	if(is_user_alive(id) && !pev(id,pev_iuser1)) return;
 
 	// remove his dropped weapons from before
-	new ent, model[22];
+	new ent;
+	static model[22];
 	while((ent = fm_find_ent_by_class(ent,"weaponbox")) != 0)
 	{
 		pev(ent,pev_model,model,21);
@@ -3155,8 +3217,8 @@ public respawn(taskid)
 	fm_cs_user_spawn(id);
 
 	// random spawns
-	if(get_pcvar_num(gg_dm_spawn_random))
-		do_random_spawn(id);
+	new spawn_random = get_pcvar_num(gg_dm_spawn_random);
+	if(spawn_random) do_random_spawn(id,spawn_random);
 
 	new Float:time = get_pcvar_float(gg_dm_sp_time);
 	new mode = get_pcvar_num(gg_dm_sp_mode);
@@ -3183,10 +3245,14 @@ public respawn(taskid)
 }
 
 // place a user at a random spawn
-public do_random_spawn(id)
+public do_random_spawn(id,spawn_random)
 {
 	// no spawns???
 	if(spawnCount <= 0) return;
+
+	// no CSDM spawns, mode 2
+	if(spawn_random == 2 && !csdmSpawnCount)
+		return;
 
 	new Float:vecHolder[3], sp_index = random_num(0,spawnCount-1);
 
@@ -3307,9 +3373,24 @@ public win(id)
 	// final playthrough, get ready for next map
 	if(mapIteration >= get_pcvar_num(gg_map_iterations))
 	{
-		emessage_begin(MSG_ALL,SVC_INTERMISSION);
-		emessage_end();
-		set_task(5.0,"goto_nextmap");
+		// send a fake intermission to DMM, because if it intercepts a real
+		// one then it will change map instantly, and give players no time
+		// to relish their victory.
+		if(find_plugin_byfile("deagsmapmanage230b.amxx") != INVALID_PLUGIN_ID
+		|| find_plugin_byfile("deagsmapmanager.amxx") != INVALID_PLUGIN_ID)
+		{
+			message_begin(MSG_ALL,SVC_INTERMISSION);
+			message_end();
+		}
+
+		// if we are not running DMM, we can send a real one, just because.
+		else
+		{
+			emessage_begin(MSG_ALL,SVC_INTERMISSION);
+			emessage_end();
+		}
+
+		set_task(10.0,"goto_nextmap");
 	}
 
 	// get ready to go again!!
@@ -3334,6 +3415,7 @@ public win(id)
 		fm_set_user_godmode(players[i],1);
 	}
 
+	// we have an invalid winner here
 	if(!is_user_connected(id) || !can_score(id))
 		return;
 
@@ -3341,11 +3423,12 @@ public win(id)
 	get_user_name(id,winnerName,31);
 
 	for(i=0;i<5;i++) gungame_print(0,id,"%%n%s%%e %L!",winnerName,LANG_PLAYER_C,"WON");
+	set_cvar_num("sv_alltalk",1);
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
 	trim(sfFile);
 
-	new stats_mode = get_pcvar_num(gg_stats_mode);
+	new stats_mode = get_pcvar_num(gg_stats_mode), stats_ip = get_pcvar_num(gg_stats_ip);
 
 	// points system
 	if(sfFile[0] && stats_mode == 2)
@@ -3375,7 +3458,10 @@ public win(id)
 
 			// log it
 			get_user_name(player,myName,31);
-			get_user_authid(player,authid,23);
+
+			if(stats_ip) get_user_ip(player,authid,23);
+			else get_user_authid(player,authid,23);
+
 			get_user_team(player,team,9);
 			log_message("^"%s<%i><%s><%s>^" triggered ^"GunGame_Points^" amount ^"%i^"",myName,get_user_userid(player),authid,team,iPoints);
 
@@ -3387,7 +3473,9 @@ public win(id)
 	// regular wins, no points
 	else if(sfFile[0] && stats_mode) stats_add_to_score(id,1,0,dummy[0],dummy[0]);
 
-	get_user_authid(id,authid,23);
+	if(stats_ip) get_user_ip(id,authid,23);
+	else get_user_authid(id,authid,23);
+
 	get_user_team(id,team,9);
 
 	log_message("^"%s<%i><%s><%s>^" triggered ^"Won_GunGame^"",winnerName,get_user_userid(id),authid,team);
@@ -3400,7 +3488,7 @@ public restart_gungame(old_bot_stop_value)
 	won = 0;
 	mapIteration++;
 
-	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE); // reset stuff
+	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_ENABLE); // reset stuff
 	do_rOrder(); // pick the next weapon order
 
 	// remove cheesey scoreboard
@@ -3452,7 +3540,10 @@ public stats_add_to_score(id,wins,points,&newWins,&newPoints)
 
 	// get data
 	new authid[24], name[32];
-	get_user_authid(id,authid,23);
+
+	if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
+	else get_user_authid(id,authid,23);
+
 	get_user_name(id,name,31);
 
 	// clean up the name
@@ -3852,7 +3943,7 @@ stock stats_prune(max_time=-1)
 // gets amount of kills required for this weapon
 stock get_weapon_goal(wpnName[],level=0)
 {
-	new wpnNameFull[32];
+	static wpnNameFull[32];
 
 	// level specified
 	if(level) get_weapon_name_by_level(level,wpnNameFull,31,1);
@@ -3879,7 +3970,7 @@ stock get_weapon_goal(wpnName[],level=0)
 			return get_pcvar_num(gg_kills_per_lvl);
 	}
 
-	new goal[4];
+	static goal[4];
 	copyc(goal,3,wpnNameFull[colon+1],',');
 
 	return str_to_num(goal);
@@ -4224,7 +4315,8 @@ stock status_display(id,status=1)
 	if(id && (!is_user_alive(id) || pev(id,pev_iuser1)))
 		return;
 
-	new dest, sprite[32];
+	new dest;
+	static sprite[32];
 	if(!id) dest = MSG_BROADCAST;
 	else dest = MSG_ONE_UNRELIABLE;
 
@@ -4308,7 +4400,7 @@ stock refill_ammo(id,current=0)
 	}
 	else
 	{
-		new fullName[24];
+		static fullName[24];
 		formatex(fullName,23,"weapon_%s",weapon[id]);
 		wpnid = get_weaponid(fullName);
 	}
@@ -4386,14 +4478,18 @@ stock refill_ammo(id,current=0)
 // find a player's weapon entity
 stock get_weapon_ent(id,wpnid=0,wpnName[]="")
 {
-	if(wpnid) get_weaponname(wpnid,wpnName,23);
-
-	// already prefixed
-	if(equal(wpnName,"weapon_",7)) return fm_find_ent_by_owner(0,wpnName,id);
-
-	// create new variable, because arrays are byref
+	// who knows what wpnName will be
 	static newName[32];
-	formatex(newName,31,"weapon_%s",wpnName);
+
+	// need to find the name
+	if(wpnid) get_weaponname(wpnid,newName,31);
+
+	// go with what we were told
+	else formatex(newName,31,"%s",wpnName);
+
+	// prefix it if we need to
+	if(!equal(newName,"weapon_",7))
+		format(newName,31,"weapon_%s",newName);
 
 	return fm_find_ent_by_owner(0,newName,id);
 }
@@ -4459,48 +4555,37 @@ stock get_weapon_category(id=0,name[]="")
 	if(name[0])
 	{
 		if(equal(name,"weapon_",7)) id = get_weaponid(name);
+		else
 		{
-			new newName[32];
+			static newName[32];
 			formatex(newName,31,"weapon_%s",name);
 			id = get_weaponid(newName);
 		}
 	}
 
-	if(!id) return 0;
-
-	if(id == CSW_SCOUT || id == CSW_XM1014 || id == CSW_MAC10
-	|| id == CSW_AUG || id == CSW_UMP45 || id ==  CSW_SG550
-	|| id == CSW_GALIL || id == CSW_FAMAS || id == CSW_AWP
-	|| id == CSW_MP5NAVY || id == CSW_M249 || id == CSW_M3
-	|| id == CSW_M4A1 || id == CSW_TMP || id == CSW_G3SG1
-	|| id == CSW_SG552 || id == CSW_AK47 || id == CSW_P90)
-		return 1;
-
-	if(id == CSW_P228 || id == CSW_ELITE || id == CSW_FIVESEVEN
-	|| id == CSW_USP || id == CSW_GLOCK18 || id == CSW_DEAGLE)
-		return 2;
-
-	if(id == CSW_KNIFE)
-		return 3;
-
-	if(id == CSW_HEGRENADE || id == CSW_SMOKEGRENADE || id == CSW_FLASHBANG)
-		return 4;
-
-	if(id == CSW_C4)
-		return 5;
-
-	return 0;
+	return weaponSlots[id];
 }
 
 // if a player is allowed to score (at least 1 player on opposite team)
-stock can_score(id=0,CsTeams:team=CS_TEAM_UNASSIGNED)
+public can_score(id)
 {
-	if(id) team = cs_get_user_team(id);
-	if(team != CS_TEAM_T && team != CS_TEAM_CT) return 0;
+	new CsTeams:team = cs_get_user_team(id);
 
-	new players[32], num;
-	if(team == CS_TEAM_T) get_players(players,num,"e","CT");
-	else get_players(players,num,"e","TERRORIST");
+	// find opposite team
+	switch(team)
+	{
+		case CS_TEAM_T: team = CS_TEAM_CT;
+		case CS_TEAM_CT: team = CS_TEAM_T;
+		default: return 0; // spectator
+	}
 
-	return num;
+	new i;
+	for(i=1;i<=maxPlayers;i++)
+	{
+		if(is_user_connected(i) && cs_get_user_team(i) == team)
+			return 1;
+	}
+
+	// didn't find anyone on opposing team
+	return 0;
 }

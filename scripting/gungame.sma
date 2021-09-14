@@ -28,7 +28,7 @@
 #include <cstrike>
 
 // defines
-#define GG_VERSION		"1.17"
+#define GG_VERSION		"1.17b"
 #define TOP_PLAYERS		10 // for !top10
 #define MAX_SPAWNS		128 // for gg_dm_spawn_random
 #define COMMAND_ACCESS		ADMIN_CVAR // for amx_gungame
@@ -131,7 +131,7 @@ new scores_menu, level_menu, bombMap, hostageMap, warmup = -1, len, voted, won, 
 weaponOrder[416], menuText[512], dummy[2], tempSave[TEMP_SAVES][27], c4planter, czero, bombStatus[4], maxPlayers,
 gameStarted, mapIteration = 1, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, cfgDir[32],
 top10[TOP_PLAYERS][81], csrespawnEnabled, modName[12], autovoted, autovotes[2], roundsElapsed,
-gameCommenced;
+gameCommenced, cycleNum = -1;
 
 // stats file stuff
 new sfFile[64], sfAuthid[24], sfWins[6], sfPoints[8], sfName[32], sfTimestamp[12], sfLineData[81];
@@ -303,12 +303,12 @@ public plugin_init()
 	gg_awp_oneshot = register_cvar("gg_awp_oneshot","1");
 
 	// sound cvars
-	gg_sound_levelup = register_cvar("gg_sound_levelup","gungame/smb3_powerup.wav");
-	gg_sound_leveldown = register_cvar("gg_sound_leveldown","gungame/smb3_powerdown.wav");
-	gg_sound_nade = register_cvar("gg_sound_nade","gungame/nade_level.wav");
-	gg_sound_knife = register_cvar("gg_sound_knife","gungame/knife_level.wav");
-	gg_sound_welcome = register_cvar("gg_sound_welcome","gungame/gungame2.wav");
-	gg_sound_triple = register_cvar("gg_sound_triple","gungame/smb_star.wav");
+	gg_sound_levelup = register_cvar("gg_sound_levelup","gungame/gg_levelup.wav");
+	gg_sound_leveldown = register_cvar("gg_sound_leveldown","ambience/xtal_down1.wav");
+	gg_sound_nade = register_cvar("gg_sound_nade","gungame/gg_nade_level.wav");
+	gg_sound_knife = register_cvar("gg_sound_knife","gungame/gg_knife_level.wav");
+	gg_sound_welcome = register_cvar("gg_sound_welcome","gungame/gg_welcome.wav");
+	gg_sound_triple = register_cvar("gg_sound_triple","gungame/gg_triple.wav");
 	gg_sound_winner = register_cvar("gg_sound_winner","media/Half-Life08.mp3");
 
 	// random weapon order cvars
@@ -543,7 +543,7 @@ public plugin_precache()
 	precache_sound_by_cvar("gg_sound_triple","gungame/smb_star.wav");
 	precache_sound_by_cvar("gg_sound_winner","media/Half-Life08.mp3");
 
-	precache_sound("gungame/brass_bell_C.wav");
+	precache_sound("gungame/gg_brass_bell.wav");
 	precache_sound("buttons/bell1.wav");
 	precache_sound("common/null.wav");
 
@@ -2742,8 +2742,8 @@ public refresh_nade(taskid)
 {
 	new id = taskid-TASK_REFRESH_NADE;
 
-	// player left, player respawned, or GunGame turned off
-	if(!is_user_connected(id) || is_user_alive(id) || !get_pcvar_num(gg_enabled)) return;
+	// player left, player died, or GunGame turned off
+	if(!is_user_connected(id) || !is_user_alive(id) || !get_pcvar_num(gg_enabled)) return;
 
 	// not on the grenade level, or have one already
 	if(!equali(weapon[id],"hegrenade") || cs_get_user_bpammo(id,CSW_HEGRENADE))
@@ -3003,12 +3003,12 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0)
 
 	if(show_message) gungame_hudmessage(id,3.0,"%L %i (%s)",id,"NOW_ON_LEVEL",level[id],weapon[id]);
 
-	new vote_setting = get_pcvar_num(gg_vote_setting);
+	new vote_setting = get_pcvar_num(gg_vote_setting), map_iterations = get_pcvar_num(gg_map_iterations);
 
 	// the level to start a map vote on
 	if(!voted && warmup <= 0 && vote_setting > 0
 	&& level[id] >= get_weapon_num() - (vote_setting - 1)
-	&& mapIteration >= get_pcvar_num(gg_map_iterations))
+	&& mapIteration >= map_iterations && map_iterations > 0)
 	{
 		new mapCycleFile[64];
 		get_gg_mapcycle_file(mapCycleFile,63);
@@ -3100,7 +3100,7 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0)
 		set_cvar_num("mp_friendlyfire",1);
 		gungame_print(0,0,"%L",LANG_PLAYER_C,"FRIENDLYFIRE_ON");
 
-		client_cmd(0,"speak ^"gungame/brass_bell_C.wav^"");
+		client_cmd(0,"speak ^"gungame/gg_brass_bell.wav^"");
 	}
 
 	// turn off FF?
@@ -3673,8 +3673,10 @@ win(id)
 	set_cvar_num("sv_alltalk",1);
 	play_sound_by_cvar(0,gg_sound_winner);
 
+	new map_iterations = get_pcvar_num(gg_map_iterations);
+
 	// final playthrough, get ready for next map
-	if(mapIteration >= get_pcvar_num(gg_map_iterations))
+	if(mapIteration >= map_iterations && map_iterations > 0)
 	{
 		set_nextmap();
 		set_task(10.0,"goto_nextmap");
@@ -3750,7 +3752,7 @@ win(id)
 			iPoints = floatround(flPoints);
 
 			// it's okay to add to stats
-			if(!ignore_bots || !is_user_bot(id))
+			if(!ignore_bots || !is_user_bot(player))
 				stats_add_to_score(player,wins,iPoints,dummy[0],totalPoints);
 
 			// log it
@@ -4647,9 +4649,24 @@ set_nextmap()
 	get_gg_mapcycle_file(mapCycleFile,63);
 
 	// no mapcycle, leave amx_nextmap alone
-	if(!mapCycleFile[0] || !file_exists(mapCycleFile)) return;
+	if(!mapCycleFile[0] || !file_exists(mapCycleFile))
+	{
+		set_localinfo("gg_cycle_num","0");
+		return;
+	}
 
-	new currentMap[32], firstMap[32], lineData[32], getNextMap, i, foundMap/*, filename[48]*/;
+	new strVal[10];
+
+	// have not gotten cycleNum yet (only get it once, because
+	// set_nextmap is generally called at least twice per map, and we
+	// don't want to change it twice)
+	if(cycleNum == -1)
+	{
+		get_localinfo("gg_cycle_num",strVal,9);
+		cycleNum = str_to_num(strVal);
+	}
+
+	new firstMap[32], currentMap[32], lineData[32], i, line, foundMap;
 	get_mapname(currentMap,31);
 
 	new file = fopen(mapCycleFile,"rt");
@@ -4658,7 +4675,6 @@ set_nextmap()
 		fgets(file,lineData,31);
 
 		trim(lineData);
-		replace_all(lineData,31,"^t"," ");
 		replace(lineData,31,".bsp",""); // remove extension
 
 		// stop at a comment
@@ -4675,33 +4691,35 @@ set_nextmap()
 		trim(lineData);
 		if(!lineData[0]) continue;
 
-		// invalid map
-		/*formatex(filename,47,"maps/%s.bsp",lineData);
-		if(!file_exists(filename)) continue;*/
-
 		// save first map
 		if(!firstMap[0]) formatex(firstMap,31,"%s",lineData);
 
-		// we found our current map, go to next one
-		if(equali(currentMap,lineData))
+		// we reached the line after our current map's line
+		if(line == cycleNum+1)
 		{
-			getNextMap = 1;
-			continue;
-		}
-
-		// we are looking for the next map, go to it
-		if(getNextMap)
-		{
+			// remember so
 			foundMap = 1;
+
+			// get ready to change to it
 			set_cvar_string("amx_nextmap",lineData);
+
+			// remember this map's line for next time
+			num_to_str(line,strVal,9);
+			set_localinfo("gg_cycle_num",strVal);
+
 			break;
 		}
+
+		line++;
 	}
 	if(file) fclose(file);
 
 	// we didn't find next map
 	if(!foundMap)
 	{
+		// reset line number to first (it's zero-based)
+		set_localinfo("gg_cycle_num","0");
+
 		// no maps listed, go to current
 		if(!firstMap[0]) set_cvar_string("amx_nextmap",currentMap);
 

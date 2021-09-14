@@ -21,7 +21,7 @@
 // jopmako, KylixMynxAltoLAG, Morpheus759, SAMURAI16, TEG,
 // ToT | V!PER, trawiator, Twilight Suzuka, and webpsiho.
 //
-// If I missed you, please yell at me. I mean, please tell me.
+// If I missed you, please yell at me.
 
 #include <amxmodx>
 #include <amxmisc>
@@ -31,7 +31,7 @@
 #include <hamsandwich>
 
 // defines to be left alone
-new const GG_VERSION[] =	"2.10";
+new const GG_VERSION[] =	"2.11c";
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 #define WINSOUNDS_SIZE		(MAX_WINSOUNDS*MAX_WINSOUND_LEN)+1 // for gg_sound_winner
@@ -96,7 +96,6 @@ enum
 #define TASK_REFRESH_NADE		1200
 #define TASK_LEADER_DISPLAY		1300
 #define TASK_PLAY_LEAD_SOUNDS		1400
-#define TASK_NOTIFY_PLAYER_SPAWN	1500
 
 //**********************************************************************
 // VARIABLE DEFINITIONS
@@ -120,7 +119,7 @@ gg_bomb_defuse_lvl, gg_nade_glock, gg_nade_smoke, gg_nade_flash, gg_give_armor, 
 gg_dm, gg_dm_sp_time, gg_dm_sp_mode, gg_dm_spawn_random, gg_dm_spawn_delay, gg_dm_corpses, gg_awp_oneshot,
 gg_host_touch_reward, gg_host_rescue_reward, gg_host_kill_reward, gg_dm_countdown, gg_status_display,
 gg_dm_spawn_afterplant, gg_block_objectives, gg_host_kill_penalty, gg_dm_start_random, gg_allow_changeteam,
-gg_teamplay_timeratio, gg_disable_money;
+gg_teamplay_timeratio, gg_disable_money, gg_kills_botmod, gg_bots_skipnade, gg_afk_protection;
 
 // weapon information
 new maxClip[31] = { -1, 13, -1, 10, 1, 7, -1, 30, 30, 1, 30, 20, 25, 30, 35, 25, 12, 20,
@@ -133,14 +132,13 @@ new weaponSlots[31] = { -1, 2, -1, 1, 4, 1, 5, 1, 1, 4, 2, 2, 1, 1, 1, 1, 2, 2, 
 		4, 2, 1, 1, 3, 1 };
 
 // misc
-new weapons_menu, scores_menu, level_menu, warmup = -1, warmupWeapon[24], len, voted, won, trailSpr, roundEnded,
+new weapons_menu, scores_menu, level_menu, warmup = -1, warmupWeapon[24], voted, won, trailSpr, roundEnded,
 menuText[512], dummy[2], tempSave[TEMP_SAVES][30], czero, maxPlayers, mapIteration = 1, cfgDir[32],
-autovoted, autovotes[2], roundsElapsed, gameCommenced, cycleNum = -1, ham_registered,
-czbot_ham_registered, mp_friendlyfire, winSounds[MAX_WINSOUNDS][MAX_WINSOUND_LEN+1], numWinSounds,
-currentWinSound, hudSyncWarmup, hudSyncReqKills, hudSyncLDisplay, shouldWarmup, ggActive, teamLevel[3],
-teamLvlWeapon[3][24], teamScore[3], bombMap, hostageMap, bombStatus[4], c4planter, Float:spawns[MAX_SPAWNS][9],
-spawnCount, csdmSpawnCount, hudSyncCountdown, Array:statsArray, statsSize, weaponName[MAX_WEAPONS+1][24],
-Float:weaponGoal[MAX_WEAPONS+1], weaponNum, initTeamplay = -1;
+autovoted, autovotes[2], roundsElapsed, gameCommenced, cycleNum = -1, czbot_hams, mp_friendlyfire,
+winSounds[MAX_WINSOUNDS][MAX_WINSOUND_LEN+1], numWinSounds, currentWinSound, hudSyncWarmup, hudSyncReqKills,
+hudSyncLDisplay, shouldWarmup, ggActive, teamLevel[3], teamLvlWeapon[3][24], teamScore[3], bombMap, hostageMap,
+bombStatus[4], c4planter, Float:spawns[MAX_SPAWNS][9], spawnCount, csdmSpawnCount, hudSyncCountdown, Array:statsArray,
+statsSize, weaponName[MAX_WEAPONS+1][24], Float:weaponGoal[MAX_WEAPONS+1], weaponNum, initTeamplay = -1, bot_quota;
 
 // stats file stuff
 new sfFile[64], sfAuthid[24], sfWins[6], sfPoints[8], sfName[32], sfTimestamp[12], sfLineData[81], glStatsMode;
@@ -151,8 +149,9 @@ gmsgCrosshair, gmsgScenario;
 
 // player values
 new level[33], levelsThisRound[33], score[33], lvlWeapon[33][24], star[33], welcomed[33],
-page[33], lastKilled[33], hosties[33][2], silenced[33], respawn_timeleft[33], Float:lastSwitch[33],
-spawnSounds[33], spawnProtected[33], statsPosition[33], Float:teamTimes[33][2], pointsExtraction[33][3];
+page[33], lastKilled[33], hosties[33][2], silenced[33], respawn_timeleft[33], Float:lastSwitch[33], lastTeam[33],
+spawnSounds[33], spawnProtected[33], statsPosition[33], Float:teamTimes[33][2], pointsExtraction[33][3],
+Float:spawnOrigin[33][3], Float:spawnAngles[33][3], afkCheck[33];
 
 //**********************************************************************
 // INITIATION FUNCTIONS
@@ -217,6 +216,9 @@ public plugin_init()
 	// hams
 	RegisterHam(Ham_Touch,"weaponbox","ham_weapon_touch",0);
 	RegisterHam(Ham_Touch,"armoury_entity","ham_weapon_touch",0);
+	RegisterHam(Ham_Spawn,"player","ham_player_spawn",1);
+	RegisterHam(Ham_Killed,"player","ham_player_killed_pre",0);
+	RegisterHam(Ham_Killed,"player","ham_player_killed_post",1);
 
 	// commands
 	register_clcmd("joinclass","cmd_joinclass"); // new menus
@@ -229,7 +231,6 @@ public plugin_init()
 	register_concmd("amx_gungame_teamplay","cmd_gungame_teamplay",ADMIN_BAN,"<0|1> [killsperlvl] [suicidepenalty] - toggles teamplay mode. optionally specify new cvar values.");
 	register_concmd("amx_gungame_restart","cmd_gungame_restart",ADMIN_BAN,"[delay] [full] - restarts GunGame. optionally specify a delay, in seconds. if full, reloads config and everything.");
 	register_srvcmd("gg_reloadweapons","cmd_reloadweapons",ADMIN_CVAR,"- reloads the weapon order and kills per level from cvars");
-	register_clcmd("fullupdate","cmd_fullupdate");
 	register_clcmd("say","cmd_say");
 	register_clcmd("say_team","cmd_say");
 
@@ -265,6 +266,7 @@ public plugin_init()
 	gg_allow_changeteam = register_cvar("gg_allow_changeteam","2");
 	gg_disable_money = register_cvar("gg_disable_money","1");
 	gg_winner_motd = register_cvar("gg_winner_motd","1");
+	gg_afk_protection = register_cvar("gg_afk_protection","0");
 
 	// autovote cvars
 	gg_autovote_rounds = register_cvar("gg_autovote_rounds","0");
@@ -326,12 +328,14 @@ public plugin_init()
 	gg_extra_nades = register_cvar("gg_extra_nades","1");
 	gg_nade_refresh = register_cvar("gg_nade_refresh","5.0");
 	gg_kills_per_lvl = register_cvar("gg_kills_per_lvl","2");
+	gg_kills_botmod = register_cvar("gg_kills_botmod","1.0");
 	gg_give_armor = register_cvar("gg_give_armor","100");
 	gg_give_helmet = register_cvar("gg_give_helmet","1");
 	gg_ammo_amount = register_cvar("gg_ammo_amount","200");
 	gg_refill_on_kill = register_cvar("gg_refill_on_kill","1");
 	gg_tk_penalty = register_cvar("gg_tk_penalty","1");
 	gg_awp_oneshot = register_cvar("gg_awp_oneshot","1");
+	gg_bots_skipnade = register_cvar("gg_bots_skipnade","0");
 	
 	// sound cvars done in plugin_precache now
 
@@ -364,7 +368,11 @@ public plugin_init()
 	// remember the mod
 	new modName[7];
 	get_modname(modName,6);
-	if(equal(modName,"czero")) czero = 1;
+	if(equal(modName,"czero"))
+	{
+		czero = 1;
+		bot_quota = get_cvar_pointer("bot_quota");
+	}
 	
 	// identify this as a bomb map
 	if(fm_find_ent_by_class(maxPlayers,"info_bomb_target") || fm_find_ent_by_class(1,"func_bomb_target"))
@@ -387,14 +395,6 @@ public plugin_init()
 	set_task(6.2,"setup_weapon_order");
 }
 
-// the hams that need to be hooked
-hook_hams(id)
-{
-	RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_pre",0);
-	RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_post",1);
-	RegisterHamFromEntity(Ham_CS_RoundRespawn,id,"ham_player_respawn",1);
-}
-
 // plugin precache
 public plugin_precache()
 {
@@ -414,12 +414,12 @@ public plugin_precache()
 	gg_sound_tiedlead = register_cvar("gg_sound_tiedlead","sound/gungame/tiedlead.wav");
 	gg_sound_lostlead = register_cvar("gg_sound_lostlead","sound/gungame/lostlead.wav");
 	gg_lead_sounds = register_cvar("gg_lead_sounds","0.8");
-	
+
 	mp_friendlyfire = get_cvar_pointer("mp_friendlyfire");
 
 	// load sound values from gungame.cfg
 	set_sounds_from_config();
-	
+
 	// really precache them
 	precache_sound_by_cvar(gg_sound_levelup);
 	precache_sound_by_cvar(gg_sound_leveldown);
@@ -451,17 +451,23 @@ public plugin_precache()
 			// no more after this, precache what we have left
 			if(pos == -1)
 			{
-				precache_generic(buffer);
-				formatex(winSounds[numWinSounds++],MAX_WINSOUND_LEN,"%s",buffer);
+				if(buffer[0])
+				{
+					precache_generic(buffer);
+					formatex(winSounds[numWinSounds++],MAX_WINSOUND_LEN,"%s",buffer);
+				}
 
 				break;
 			}
 		
 			// copy up to the semicolon and precache that
 			formatex(temp,pos,"%s",buffer);
-			precache_generic(temp);
-
-			formatex(winSounds[numWinSounds++],MAX_WINSOUND_LEN,"%s",temp);
+			
+			if(temp[0])
+			{
+				precache_generic(temp);
+				formatex(winSounds[numWinSounds++],MAX_WINSOUND_LEN,"%s",temp);
+			}
 
 			// copy everything after the semicolon
 			format(buffer,WINSOUNDS_SIZE-1,"%s",buffer[pos+1]);
@@ -565,7 +571,7 @@ public client_disconnect(id)
 		if(ggActive && save_temp && (level[id] > 1 || score[id] > 0))
 		{
 			// keep track of times
-			new team = _:cs_get_user_team(id);
+			new team = get_user_team(id);
 			if(team == 1 || team == 2) teamTimes[id][team-1] += get_gametime() - lastSwitch[id];
 
 			new freeSave = -1, oldestSave = -1, i;
@@ -605,36 +611,37 @@ public client_disconnect(id)
 	statsPosition[id] = 0;
 }
 
+// connection BEGIN!
+public client_connect(id)
+{
+	lastKilled[id] = -1; // skip first Ham_Spawn
+}
+
 // someone joins, monitor ham hooks
 public client_putinserver(id)
 {
-	if(!ham_registered) set_task(1.0,"hook_ham",id);
-	if(czero && !czbot_ham_registered) set_task(1.0,"czbot_hook_ham",id);
-}
-
-// delay for private data to initialize
-public hook_ham(id)
-{
-	if(ham_registered || !is_user_connected(id)) return;
-
-	// probably NOT a czero bot
-	if(!czero || !(pev(id,pev_flags) & FL_FAKECLIENT) || get_cvar_num("bot_quota") <= 0)
+	if(czero && !czbot_hams && is_user_bot(id) && get_pcvar_num(bot_quota) > 0)
 	{
-		hook_hams(id);
-		ham_registered = 1;
+		lastKilled[id] = 0; // don't skip first Ham_Spawn
+		set_task(0.1,"czbot_hook_ham",id);
 	}
 }
 
-// delay for private data to initialize
+// delay for private data to initialize --
+// here is the problem: registering a ham hook for "player" won't
+// register it for CZ bots, for some reason. so we have to register
+// it by entity. so we do this ridiculous thing in order to do so.
 public czbot_hook_ham(id)
 {
-	if(czbot_ham_registered || !is_user_connected(id)) return;
+	if(czbot_hams || !is_user_connected(id)) return;
 
-	// probably a czero bot (if czero check done before set_task)
-	if((pev(id,pev_flags) & FL_FAKECLIENT) && get_cvar_num("bot_quota") > 0)
+	// probably a czero bot
+	if(is_user_bot(id) && get_pcvar_num(bot_quota) > 0)
 	{
-		hook_hams(id);
-		czbot_ham_registered = 1;
+		RegisterHamFromEntity(Ham_Spawn,id,"ham_player_spawn",1);
+		RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_pre",0);
+		RegisterHamFromEntity(Ham_Killed,id,"ham_player_killed_post",1);
+		czbot_hams = 1;
 	}
 }
 
@@ -648,22 +655,28 @@ public clear_save(taskid)
 // my info... it's changed!
 public client_infochanged(id)
 {
-	// lots of things that we don't care about
-	if(!is_user_connected(id) || !ggActive || !get_pcvar_num(gg_teamplay))
+	if(!ggActive || !is_user_connected(id))
 		return PLUGIN_CONTINUE;
 	
+	new oldTeam = lastTeam[id], newTeam = _:cs_get_user_team(id);
+	
+	// this means it was caught by logevent_team_join, or wasn't a team change
+	if(oldTeam == newTeam) return PLUGIN_CONTINUE;
+	
+	player_teamchange(id,oldTeam,newTeam);
+	
 	// invalid team
-	new team = _:cs_get_user_team(id); // get_user_team will be old team
-	if(team != 1 && team != 2) return PLUGIN_CONTINUE;
+	if((newTeam != 1 && newTeam != 2) || !get_pcvar_num(gg_teamplay))
+		return PLUGIN_CONTINUE;
 	
 	// something is out of synch
-	if(teamLevel[team] && (level[id] != teamLevel[team] || score[id] != teamScore[team] || !equal(lvlWeapon[id],teamLvlWeapon[team])))
+	if(teamLevel[newTeam] && (level[id] != teamLevel[newTeam] || score[id] != teamScore[newTeam] || !equal(lvlWeapon[id],teamLvlWeapon[newTeam])))
 	{
 		// set them directly
-		level[id] = teamLevel[team];
-		lvlWeapon[id] = teamLvlWeapon[team];
-		score[id] = teamScore[team];
-		
+		level[id] = teamLevel[newTeam];
+		lvlWeapon[id] = teamLvlWeapon[newTeam];
+		score[id] = teamScore[newTeam];
+
 		// gimme mah weapon!
 		if(is_user_alive(id)) give_level_weapon(id);
 	}
@@ -753,45 +766,36 @@ public fw_emitsound(ent,channel,sample[],Float:volume,Float:atten,flags,pitch)
 // EVENT HOOKS
 //**********************************************************************
 
-// respawnish
+// our HUD gets reset (obviously)
 public event_resethud(id)
 {
-	if(!ggActive || !is_user_connected(id))
-		return;
-	
-	// re-entrancy fix
-	static Float:lastThis[33];
-	new Float:now = get_gametime();
-	if(now <= lastThis[id]) return;
-	lastThis[id] = now+0.15; // 0.15 for our task
-	
-	// bug fix for when you join in middle of round -- ham_player_spawn is not called
-	remove_task(TASK_NOTIFY_PLAYER_SPAWN+id);
-	set_task(0.1,"notify_player_spawn_delay",TASK_NOTIFY_PLAYER_SPAWN+id);
-
-	// UPDATE THE DISPLAY!!!
-	status_display(id);
+	if(ggActive && is_user_connected(id))
+		set_task(0.1,"reset_hud",id);
 }
 
-// delay, because removed in ham_player_spawn
-public notify_player_spawn_delay(taskid)
+// fix the leader display and hide money
+public reset_hud(id)
 {
-	new id = taskid-TASK_NOTIFY_PLAYER_SPAWN;
-	if(is_user_alive(id)) player_spawn(id,1); // skip delay
+	if(is_user_connected(id))
+	{
+		status_display(id);
+		if(get_pcvar_num(gg_disable_money)) hide_money(id);
+	}
 }
 
 // someone changes weapons
 public event_curweapon(id)
 {
-	if(!ggActive) return;
+	if(!ggActive || !is_user_connected(id)) return;
 
 	// keep star speed
 	if(star[id]) fm_set_user_maxspeed(id,fm_get_user_maxspeed(id)*1.5);
 	
-	if(!get_pcvar_num(gg_awp_oneshot)) return;
+	// monitor weapon activity
+	if(afkCheck[id] && is_user_alive(id)) afkCheck[id]++;
 
 	// have at least one bullet in AWP clip
-	if(read_data(2) == CSW_AWP && read_data(3) > 1)
+	if(get_pcvar_num(gg_awp_oneshot) && read_data(2) == CSW_AWP && read_data(3) > 1)
 	{
 		new wEnt = get_weapon_ent(id,CSW_AWP);
 		if(pev_valid(wEnt)) cs_set_weapon_ammo(wEnt,1);
@@ -946,12 +950,12 @@ public event_round_restart()
 			return;
 		}
 	}
-	else if(ggActive) // #Game_will_restart_in
+	/*else if(ggActive) // #Game_will_restart_in
 	{
 		read_data(3,message,4); // time to restart in
 		new Float:time = floatstr(message) - 0.1;
 		set_task((time < 0.1) ? 0.1 : time,"clear_all_values");
-	}
+	}*/
 }
 
 // a delayed clearing
@@ -1021,7 +1025,13 @@ public event_ammox(id)
 // map is changing
 public event_intermission()
 {
-	if(!ggActive || won) return;
+	if(!ggActive) return;
+	
+	if(won)
+	{
+		if(set_nextmap()) set_task(1.0,"goto_nextmap");
+		return;
+	}
 	
 	new player, found;
 	for(player=1;player<=maxPlayers;player++)
@@ -1034,7 +1044,11 @@ public event_intermission()
 	}
 	
 	// did not find any players on a valid team, game over man
-	if(!found) return;
+	if(!found)
+	{
+		if(set_nextmap()) set_task(1.0,"goto_nextmap");
+		return;
+	}
 	
 	// teamplay, easier to decide
 	if(get_pcvar_num(gg_teamplay))
@@ -1070,6 +1084,8 @@ public event_intermission()
 		}
 		
 		win(plWinner,plLoser);
+		if(set_nextmap()) set_task(1.0,"goto_nextmap");
+
 		return;
 	}
 
@@ -1082,7 +1098,11 @@ public event_intermission()
 	get_players(players,pNum);
 	
 	// no one here
-	if(pNum <= 0) return;
+	if(pNum <= 0)
+	{
+		if(set_nextmap()) set_task(1.0,"goto_nextmap");
+		return;
+	}
 
 	new topLevel[32], tlNum;
 
@@ -1147,6 +1167,9 @@ public event_intermission()
 
 	// crown them
 	win(winner,0);
+	
+	// go to next map in cycle
+	if(set_nextmap()) set_task(1.0,"goto_nextmap");
 }
 
 //**********************************************************************
@@ -1216,6 +1239,8 @@ public message_weappickup(msg_id,msg_dest,msg_entity)
 // delay, since weappickup is slightly before we actually get the weapon
 public strip_c4(id)
 {
+	if(!is_user_connected(id)) return;
+
 	ham_strip_weapon(id,"weapon_c4");
 	
 	// remove it from HUD
@@ -1502,19 +1527,21 @@ public logevent_team_join()
 //**********************************************************************
 
 // a player respawned
-public ham_player_respawn(id)
+public ham_player_spawn(id)
 {
-	if(!ggActive) return HAM_IGNORED;
+	// a fix presented by vittu:
+	// when a player joins the game, they call Ham_Spawn.
+	// however, certain bots (specifically PODBot) are counted
+	// as both alive and on a team for this initial Ham_Spawn,
+	// so we get around this by blocking the first Ham_Spawn
+	// call after client_connect.
+	if(lastKilled[id] == -1) // set to -1 in client_connect
+	{
+		lastKilled[id] = 0;
+		return HAM_IGNORED;
+	}
 
-	remove_task(TASK_CHECK_DEATHMATCH+id);
-	remove_task(TASK_NOTIFY_PLAYER_SPAWN+id); // stop resethud's spawn notice
-	
-	// wait for inventory to initialize
-	if(get_pcvar_num(gg_pickup_others))
-		set_task(0.1,"strip_starting_pistols",id);
-
-	player_spawn(id);
-	
+	if(ggActive && is_user_alive(id)) spawned(id);
 	return HAM_IGNORED;
 }
 
@@ -1622,7 +1649,11 @@ public ham_player_killed_post(victim,killer,gib)
 			// pev_dmgtime, while a real hegrenade does. so distinguish between hegrenade
 			// and C4, and ignore C4 kills. also note that we can't compare models,
 			// because at this stage both an hegrenade and C4 have no model.
-			if(!dmgtime) return 0;
+			if(!dmgtime)
+			{
+				afkCheck[victim] = 0;
+				return 0;
+			}
 		}
 
 		// fix name
@@ -1636,20 +1667,48 @@ public ham_player_killed_post(victim,killer,gib)
 		if(!roundEnded && get_pcvar_num(gg_allow_changeteam))
 		{
 			set_task(0.1,"delayed_suicide",TASK_DELAYED_SUICIDE+victim);
-			return 0; // in the meantime, don'tpenalize the suicide
+			afkCheck[victim] = 0;
+
+			return 0; // in the meantime, don't penalize the suicide
 		}
 
 		player_suicided(killer);
+		afkCheck[victim] = 0;
+
 		return 1; 
 	}
+
+	// afk checker
+	if(afkCheck[victim] && afkCheck[victim] < 3) // 0 = no afk check, 3+ = they did something with a weapon (it is set to 1, and it goes to 2 when they get their new weapon)
+	{
+		new Float:origin[3], Float:angles[3];
+		pev(victim,pev_origin,origin);
+		pev(victim,pev_v_angle,angles);
+
+		// haven't budged an inch
+		if(origin[0] == spawnOrigin[victim][0] && origin[1] == spawnOrigin[victim][1] /* don't check z, they fall */
+		&& angles[0] == spawnAngles[victim][0] && angles[1] == spawnAngles[victim][1] && angles[2] == spawnAngles[victim][2])
+		{
+			new name[32];
+			get_user_name(victim,name,31);
+
+			gungame_print(killer,victim,1,"%L",killer,"AFK_KILL",name);
+			afkCheck[victim] = 0;
+			
+			return 0;
+		}
+	}
+
+	afkCheck[victim] = 0;
 
 	// other player had spawn protection
 	if(spawnProtected[victim])
 	{
 		new name[32];
 		get_user_name(victim,name,31);
-
 		gungame_print(killer,victim,1,"%L",killer,"SPAWNPROTECTED_KILL",name,floatround(get_pcvar_float(gg_dm_sp_time)));
+		
+		spawnProtected[victim] = 0;
 		return 0;
 	}
 
@@ -1788,9 +1847,13 @@ public ham_player_killed_post(victim,killer,gib)
 // a player is touching a weaponbox or armoury_entity, possibly disallow
 public ham_weapon_touch(weapon,other)
 {
-	// gungame off, non-player or dead-player, or allowed to pick up others
-	if(!ggActive || !is_user_alive(other) || get_pcvar_num(gg_pickup_others))
-		return HAM_IGNORED;
+	// gungame off and non-player or dead-player
+	if(!ggActive || !is_user_alive(other)) return HAM_IGNORED;
+	
+	new knife_elite = get_pcvar_num(gg_knife_elite);
+	
+	// pickup others enabled, and no conflict with knife elite, stop here
+	if(get_pcvar_num(gg_pickup_others) && (!knife_elite || !levelsThisRound[other])) return HAM_IGNORED;
 	
 	static model[24];
 	pev(weapon,pev_model,model,23);
@@ -1801,6 +1864,9 @@ public ham_weapon_touch(weapon,other)
 	// weaponbox model is no good, but C4 is okay
 	// checks for weaponbox, backpack
 	if(model[8] == 'x' || model[0] == 'b') return HAM_IGNORED;
+	
+	// now that we allowed C4, check for knife elite again
+	if(knife_elite && levelsThisRound[other]) return HAM_SUPERCEDE;
 	
 	// weapon is weapon_mp5navy, but model is w_mp5.mdl
 	// checks for mp5
@@ -1982,7 +2048,7 @@ public cmd_gungame_teamplay(id,lvl,cid)
 	new suicideloselvl = str_to_num(arg3);
 	
 	new result[128];
-	len = formatex(result,127,"[GunGame] Turned Teamplay Mode %s",(teamplay) ? "on" : "off");
+	new len = formatex(result,127,"[GunGame] Turned Teamplay Mode %s",(teamplay) ? "on" : "off");
 
 	server_cmd("gg_teamplay %i",teamplay);
 	if(killsperlvl > 0.0)
@@ -2036,12 +2102,6 @@ public cmd_reloadweapons(id,lvl,cid)
 	return PLUGIN_HANDLED;
 }
 
-// block fullupdate
-public cmd_fullupdate(id)
-{
-	return PLUGIN_HANDLED;
-}
-
 // hook say
 public cmd_say(id)
 {
@@ -2083,7 +2143,7 @@ public cmd_say(id)
 		console_print(id,"-----------------------------");
 		console_print(id,"-----------------------------");
 
-		len = formatex(menuText,511,"%L^n",id,"RULES_MESSAGE_LINE1");
+		new len = formatex(menuText,511,"%L^n",id,"RULES_MESSAGE_LINE1");
 		len += formatex(menuText[len],511-len,"\d----------\w^n");
 		len += formatex(menuText[len],511-len,"%L^n",id,"RULES_MESSAGE_LINE2");
 		len += formatex(menuText[len],511-len,"\d----------\w^n");
@@ -2141,7 +2201,7 @@ public cmd_say(id)
 			return PLUGIN_HANDLED;
 		}
 
-		len = formatex(menuText,511,"%L^n^n",id,"RESET_QUERY");
+		new len = formatex(menuText,511,"%L^n^n",id,"RESET_QUERY");
 		len += formatex(menuText[len],511-len,"1. %L^n",id,"YES");
 		len += formatex(menuText[len],511-len,"0. %L",id,"CANCEL");
 		show_menu(id,MENU_KEY_1|MENU_KEY_0,menuText,-1,"restart_menu");
@@ -2393,9 +2453,9 @@ public respawn(taskid)
 		if(mode == 2)
 		{
 			fm_set_user_godmode(id,1);
-			fm_set_rendering(id,kRenderFxGlowShell,200,200,100,kRenderNormal,1); // goldenish
+			fm_set_rendering(id,kRenderFxGlowShell,200,200,100,kRenderNormal,8); // goldenish
 		}
-		else fm_set_rendering(id,kRenderFxGlowShell,100,100,100,kRenderNormal,1); // gray/white
+		else fm_set_rendering(id,kRenderFxGlowShell,100,100,100,kRenderNormal,8); // gray/white
 
 		set_task(time,"remove_spawn_protection",TASK_REMOVE_PROTECTION+id);
 	}
@@ -2404,7 +2464,7 @@ public respawn(taskid)
 // place a user at a random spawn
 do_random_spawn(id,spawn_random)
 {
-	// not even alive, don't brother
+	// not even alive, don't bother
 	if(!is_user_alive(id)) return;
 
 	// no spawns???
@@ -2486,12 +2546,11 @@ do_random_spawn(id,spawn_random)
 public remove_spawn_protection(taskid)
 {
 	new id = taskid-TASK_REMOVE_PROTECTION;
+	spawnProtected[id] = 0;
 
 	if(!is_user_connected(id)) return;
-
-	spawnProtected[id] = 0;
-	if(get_pcvar_num(gg_dm_sp_mode) == 2) fm_set_user_godmode(id,0);
 	
+	if(get_pcvar_num(gg_dm_sp_mode) == 2) fm_set_user_godmode(id,0);
 	fm_set_rendering(id); // reset back to normal
 }
 
@@ -2592,13 +2651,11 @@ show_level_menu(id)
 {
 	new goal, tied, leaderNum, leaderList[128], name[32];
 	
-	new leaderLevel, numLeaders, leader, runnerUp;
+	new leaderLevel, numLeaders, leader, runnerUp, len;
 	new teamplay = get_pcvar_num(gg_teamplay), team;
 		
 	if(teamplay) leader = teamplay_get_lead_team(leaderLevel,numLeaders,runnerUp);
 	else leader = get_leader(leaderLevel,numLeaders,runnerUp);
-	
-	len = 0;
 
 	if(numLeaders > 1) tied = 1;
 	
@@ -2740,7 +2797,7 @@ show_top10_menu(id)
 	if(page[id] < 1) page[id] = 1;
 	if(page[id] > pageTotal) page[id] = pageTotal;
 
-	len = formatex(menuText,511-len,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"TOP_10",page[id],pageTotal);
+	new len = formatex(menuText,511,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"TOP_10",page[id],pageTotal);
 	//len += formatex(menuText[len],511-len,"\d-----------\w^n");
 
 	new start = (playersPerPage * (page[id]-1)), i;
@@ -2853,7 +2910,7 @@ show_weapons_menu(id)
 	if(page[id] < 1) page[id] = 1;
 	if(page[id] > pageTotal) page[id] = pageTotal;
 
-	len = formatex(menuText,511-len,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"WEAPONS",page[id],pageTotal);
+	new len = formatex(menuText,511,"\y%L %L (%i/%i)\w^n",id,"GUNGAME",id,"WEAPONS",page[id],pageTotal);
 	//len += formatex(menuText[len],511-len,"\d-----------\w^n");
 
 	new start = (wpnsPerPage * (page[id]-1)) + 1, i;
@@ -2942,7 +2999,7 @@ public weapons_menu_handler(id,key)
 // show the score list menu
 show_scores_menu(id)
 {
-	new keys;
+	new keys, len;
 
 	if(get_pcvar_num(gg_teamplay))
 	{
@@ -3016,11 +3073,11 @@ show_scores_menu(id)
 				if(statsPosition[player])
 				{
 					get_number_suffix(statsPosition[player],statsSuffix,2);
-					len += formatex(menuText[len],511-len,"%s#%i %s, %L %i (%s) %i/%i, %i %L (%i%s)^n",(player == id) ? "\r" : "\w",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player]),(stats_mode == 1) ? wins : points,id,(stats_mode == 1) ? "WINS" : "POINTS",statsPosition[player],statsSuffix);
+					len += formatex(menuText[len],511-len,"%s#%i %s, %L %i (%s) %i/%i, %i %L (%i%s)^n",(player == id) ? "\r" : "\w",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player],player),(stats_mode == 1) ? wins : points,id,(stats_mode == 1) ? "WINS" : "POINTS",statsPosition[player],statsSuffix);
 				}
-				else len += formatex(menuText[len],511-len,"%s#%i %s, %L %i (%s) %i/%i, %i %L (%L)^n",(player == id) ? "\r" : "\w",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player]),(stats_mode == 1) ? wins : points,id,(stats_mode == 1) ? "WINS" : "POINTS",id,"UNRANKED");
+				else len += formatex(menuText[len],511-len,"%s#%i %s, %L %i (%s) %i/%i, %i %L (%L)^n",(player == id) ? "\r" : "\w",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player],player),(stats_mode == 1) ? wins : points,id,(stats_mode == 1) ? "WINS" : "POINTS",id,"UNRANKED");
 			}
-			else len += formatex(menuText[len],511-len,"#%i %s, %L %i (%s) %i/%i^n",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player]));
+			else len += formatex(menuText[len],511-len,"#%i %s, %L %i (%s) %i/%i^n",i+1,name,id,"LEVEL",level[player],displayWeapon,score[player],get_level_goal(level[player],player));
 		}
 
 		len += formatex(menuText[len],511-len,"\d-----------\w^n");
@@ -3196,6 +3253,9 @@ public toggle_gungame(taskid)
 	// reset some things
 	if(!ggActive)
 	{
+		// set armouries to be solid again
+		show_armory_entitys();
+
 		// clear HUD message
 		if(warmup > 0) ClearSyncHud(0,hudSyncWarmup);
 
@@ -3455,9 +3515,17 @@ show_progress_display(id)
 			}
 			else
 			{
-				static numWord[16];
-				num_to_word(numLeaders-1,numWord,15);
-				trim(numWord);
+				static numWord[16], lang[3];
+
+				// if english, use words, otherwise use digits
+				get_user_info(id,"lang",lang,2);
+				if(equali(lang,"en"))
+				{
+					num_to_word(numLeaders-1,numWord,15);
+					trim(numWord);
+				}
+				else formatex(numWord,15,"%i",numLeaders-1);
+
 				formatex(statusString,47,"%L",id,"PROGRESS_DISPLAY3",numWord);
 			}
 		}
@@ -3671,39 +3739,14 @@ public manage_equips()
 }
 
 // someone respawned
-stock player_spawn(id,skipDelay=0)
+spawned(id)
 {
-	if(!ggActive || !is_user_connected(id))
-		return 0;
+	// should be filtered in ham hook
+	if(/*!ggActive || !is_user_connected(id) ||*/ !on_valid_team(id))
+		return;
+	
+	remove_task(TASK_CHECK_DEATHMATCH+id);
 
-	// have not joined yet
-	if(!on_valid_team(id)) return 0;
-	
-	// re-entrancy fix
-	static Float:lastThis[33];
-	new Float:now = get_gametime();
-	if(now == lastThis[id]) return 0;
-	lastThis[id] = now;
-	
-	// the delay is already taken care of
-	if(skipDelay)
-	{
-		post_spawn(id);
-		return 1;
-	}
-
-	// an unfortunately necessary delay because we
-	// have to wait for the inventory to initialize
-	set_task(0.1,"post_spawn",id);
-	
-	return 1;
-}
-
-// our delay
-public post_spawn(id)
-{
-	if(!is_user_connected(id)) return;
-	
 	// should be frozen?
 	if(won)
 	{
@@ -3726,130 +3769,141 @@ public post_spawn(id)
 		
 		return;
 	}
+	
+	if(get_pcvar_num(gg_pickup_others)) strip_starting_pistols(id);
 
+	afkCheck[id] = 0;
 	levelsThisRound[id] = 0;
 
 	// just joined
 	if(!level[id])
 	{
-		// handicap
-		new handicapMode = get_pcvar_num(gg_handicap_on), teamplay = get_pcvar_num(gg_teamplay);
-		if(handicapMode && !teamplay)
+		// warming up
+		if(warmup > 0)
 		{
-			new rcvHandicap = 1;
-
-			get_pcvar_string(gg_stats_file,sfFile,1);
-
-			// top10 doesn't receive handicap -- also make sure we are using top10
-			if(!get_pcvar_num(gg_top10_handicap) && sfFile[0] && get_pcvar_num(gg_stats_mode))
-			{
-				static authid[24];
-
-				if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
-				else get_user_authid(id,authid,23);
-
-				new i;
-				for(i=0;i<TOP_PLAYERS;i++)
-				{
-					// blank
-					if(i >= statsSize) continue;
-
-					// isolate authid
-					ArrayGetString(statsArray,i,sfLineData,23);
-					strtok(sfLineData,sfAuthid,23,dummy,1,'^t');
-
-					// I'm in top10, don't give me handicap
-					if(equal(authid,sfAuthid))
-					{
-						rcvHandicap = 0;
-						break;
-					}
-				}
-			}
-
-			if(rcvHandicap)
-			{
-				new player;
-
-				// find lowest level (don't use bots unless we have to)
-				if(handicapMode == 2)
-				{
-					new isBot, myLevel, lowestLevel, lowestBotLevel;
-					for(player=1;player<=maxPlayers;player++)
-					{
-						if(!is_user_connected(player) || player == id)
-							continue;
-
-						isBot = is_user_bot(player);
-						myLevel = level[player];
-
-						if(!myLevel) continue;
-
-						if(!isBot && (!lowestLevel || myLevel < lowestLevel))
-							lowestLevel = myLevel;
-						else if(isBot && (!lowestBotLevel || myLevel < lowestBotLevel))
-							lowestBotLevel = myLevel;
-					}
-
-					// CLAMP!
-					if(!lowestLevel) lowestLevel = 1;
-					if(!lowestBotLevel) lowestBotLevel = 1;
-
-					change_level(id,(lowestLevel > 1) ? lowestLevel : lowestBotLevel,1,_,1); // just joined, always score
-				}
-
-				// find average level
-				else
-				{
-					new Float:average, num;
-					for(player=1;player<=maxPlayers;player++)
-					{
-						if(is_user_connected(player) && level[player])
-						{
-							average += float(level[player]);
-							num++;
-						}
-					}
-
-					average /= float(num);
-					change_level(id,(average >= 0.5) ? floatround(average) : 1,1,_,1); // just joined, always score
-				}
-			}
-
-			// not eligible for handicap (in top10 with gg_top10_handicap disabled)
-			else change_level(id,1,1_,1); // just joined, always score
+			change_level(id,1,1_,1); // just joined, always score
 		}
-
-		// no handicap enabled or playing teamplay
 		else
 		{
-			if(teamplay)
+			// handicap
+			new handicapMode = get_pcvar_num(gg_handicap_on), teamplay = get_pcvar_num(gg_teamplay);
+			if(handicapMode && !teamplay)
 			{
-				new team = _:cs_get_user_team(id);
-				
-				if(team == 1 || team == 2)
-				{
-					// my team has a level already
-					if(teamLevel[team])
-					{
-						change_level(id,teamLevel[team],1,_,1,_,0); // just joined, always score, don't effect team
-						if(teamScore[team]) change_score(id,teamScore[team],_,0); // don't effect team
-					}
-					
-					// my team just started
-					else
-					{
-						// initialize its values
-						teamplay_update_level(team,1,id);
-						teamplay_update_score(team,0,id);
+				new rcvHandicap = 1;
 
-						change_level(id,teamLevel[team],1,_,1,_,0); // just joined, always score, don't effect team
+				get_pcvar_string(gg_stats_file,sfFile,1);
+
+				// top10 doesn't receive handicap -- also make sure we are using top10
+				if(!get_pcvar_num(gg_top10_handicap) && sfFile[0] && get_pcvar_num(gg_stats_mode))
+				{
+					static authid[24];
+
+					if(get_pcvar_num(gg_stats_ip)) get_user_ip(id,authid,23);
+					else get_user_authid(id,authid,23);
+
+					new i;
+					for(i=0;i<TOP_PLAYERS;i++)
+					{
+						// blank
+						if(i >= statsSize) continue;
+
+						// isolate authid
+						ArrayGetString(statsArray,i,sfLineData,23);
+						strtok(sfLineData,sfAuthid,23,dummy,1,'^t');
+
+						// I'm in top10, don't give me handicap
+						if(equal(authid,sfAuthid))
+						{
+							rcvHandicap = 0;
+							break;
+						}
 					}
 				}
+
+				if(rcvHandicap)
+				{
+					new player;
+
+					// find lowest level (don't use bots unless we have to)
+					if(handicapMode == 2)
+					{
+						new isBot, myLevel, lowestLevel, lowestBotLevel;
+						for(player=1;player<=maxPlayers;player++)
+						{
+							if(!is_user_connected(player) || player == id)
+								continue;
+
+							isBot = is_user_bot(player);
+							myLevel = level[player];
+
+							if(!myLevel) continue;
+
+							if(!isBot && (!lowestLevel || myLevel < lowestLevel))
+								lowestLevel = myLevel;
+							else if(isBot && (!lowestBotLevel || myLevel < lowestBotLevel))
+								lowestBotLevel = myLevel;
+						}
+
+						// CLAMP!
+						if(!lowestLevel) lowestLevel = 1;
+						if(!lowestBotLevel) lowestBotLevel = 1;
+
+						change_level(id,(lowestLevel > 1) ? lowestLevel : lowestBotLevel,1,_,1); // just joined, always score
+					}
+
+					// find average level
+					else
+					{
+						new Float:average, num;
+						for(player=1;player<=maxPlayers;player++)
+						{
+							if(is_user_connected(player) && level[player])
+							{
+								average += float(level[player]);
+								num++;
+							}
+						}
+
+						average /= float(num);
+						change_level(id,(average >= 0.5) ? floatround(average) : 1,1,_,1); // just joined, always score
+					}
+				}
+
+				// not eligible for handicap (in top10 with gg_top10_handicap disabled)
+				else change_level(id,1,1_,1); // just joined, always score
 			}
-			
-			// solo-play
-			else change_level(id,1,1,_,1); // just joined, always score
+
+			// no handicap enabled or playing teamplay
+			else
+			{
+				if(teamplay)
+				{
+					new team = _:cs_get_user_team(id);
+					
+					if(team == 1 || team == 2)
+					{
+						// my team has a level already
+						if(teamLevel[team])
+						{
+							change_level(id,teamLevel[team],1,_,1,_,0); // just joined, always score, don't effect team
+							if(teamScore[team]) change_score(id,teamScore[team],_,0); // don't effect team
+						}
+						
+						// my team just started
+						else
+						{
+							// initialize its values
+							teamplay_update_level(team,1,id);
+							teamplay_update_score(team,0,id);
+
+							change_level(id,teamLevel[team],1,_,1,_,0); // just joined, always score, don't effect team
+						}
+					}
+				}
+				
+				// solo-play
+				else change_level(id,1,1,_,1); // just joined, always score
+			}
 		}
 	}
 
@@ -3908,7 +3962,7 @@ public post_spawn(id)
 	if(get_pcvar_num(gg_disable_money)) hide_money(id);
 	
 	// switch to our appropiate weapon, for those without the switch to new weapon option
-	if(((warmup > 0 && warmupWeapon[0] && equal(warmupWeapon,"knife")) || (get_pcvar_num(gg_knife_elite) && levelsThisRound[id] > 0)) || equal(lvlWeapon[id],"knife"))
+	if((warmup > 0 && warmupWeapon[0] && equal(warmupWeapon,"knife")) || equal(lvlWeapon[id],"knife") /* || (get_pcvar_num(gg_knife_elite) && levelsThisRound[id] > 0)*/)
 	{
 		engclient_cmd(id,"weapon_knife");
 		client_cmd(id,"weapon_knife");
@@ -3926,12 +3980,23 @@ public post_spawn(id)
 		engclient_cmd(id,wpnName);
 		client_cmd(id,wpnName);
 	}
+	
+	// remember spawn info for AFK protection
+	if(get_pcvar_num(gg_afk_protection))
+	{
+		pev(id,pev_origin,spawnOrigin[id]);
+		pev(id,pev_v_angle,spawnAngles[id]);
+		afkCheck[id] = 1;
+	}
 }
 
 // player changed his team
 player_teamchange(id,oldTeam,newTeam)
 {
 	if(!ggActive) return 0;
+	
+	// remember for crazy team switches
+	lastTeam[id] = newTeam;
 	
 	// keep track of time
 	new Float:time = get_gametime();
@@ -3965,6 +4030,7 @@ public restart_round(time)
 	clear_team_values(2);*/
 
 	set_cvar_num("sv_restartround",time);
+	set_task(float(time)-0.1,"clear_all_values");
 }
 
 // select a random weapon order
@@ -3987,6 +4053,16 @@ do_rOrder()
 			maxRandom = i - 1;
 			break;
 		}
+	}
+	
+	// there is just one
+	if(maxRandom == 1)
+	{
+		// get its weapon order and set as current
+		formatex(cvar,19,"gg_weapon_order1");
+		get_cvar_string(cvar,weaponOrder,MAX_WEAPONS*16);
+		set_pcvar_string(gg_weapon_order,weaponOrder);
+		return;
 	}
 
 	// we found some random ones
@@ -4183,12 +4259,15 @@ clear_values(id,ignoreWelcome=0)
 	teamTimes[id][0] = 0.0;
 	teamTimes[id][1] = 0.0;
 	lastSwitch[id] = get_gametime();
+	lastTeam[id] = 0;
 
 	if(c4planter == id) c4planter = 0;
 	
 	remove_task(TASK_RESPAWN+id);
 	remove_task(TASK_CHECK_DEATHMATCH+id);
 	remove_task(TASK_REMOVE_PROTECTION+id);
+	
+	if(is_user_connected(id)) fm_set_rendering(id);
 
 	return 1;
 }
@@ -4253,7 +4332,7 @@ public refresh_nade(taskid)
 	if(equal(lvlWeapon[id],"hegrenade") && !user_has_weapon(id,CSW_HEGRENADE))
 		ham_give_weapon(id,"weapon_hegrenade");
 	
-	// get bots to use the grenade
+	// get bots to use the grenade (doesn't work very well)
 	if(is_user_bot(id))
 	{
 		engclient_cmd(id,"weapon_hegrenade");
@@ -4266,12 +4345,9 @@ stock refill_ammo(id,current=0)
 {
 	if(!is_user_alive(id)) return 0;
 
-	// weapon-specific warmup
-	if(warmup > 0 && warmupWeapon[0])
-	{
-		// no ammo for knives only
-		if(equal(warmupWeapon,"knife")) return 0;
-	}
+	// weapon-specific warmup, no ammo for knives only
+	if(warmup > 0 && warmupWeapon[0] && equal(warmupWeapon,"knife"))
+		return 0;
 
 	// get weapon name and index
 	static fullName[24], curWpnName[24];
@@ -4420,7 +4496,7 @@ public show_welcome(id)
 
 	play_sound_by_cvar(id,gg_sound_welcome);
 
-	len = formatex(menuText,511,"\y%L\w^n",id,"WELCOME_MESSAGE_LINE1",GG_VERSION);
+	new len = formatex(menuText,511,"\y%L\w^n",id,"WELCOME_MESSAGE_LINE1",GG_VERSION);
 	len += formatex(menuText[len],511-len,"\d---------------\w^n");
 
 	new special;
@@ -4615,7 +4691,7 @@ stock change_score(id,value,refill=1,effect_team=1)
 		teamplay_update_score(team,score[id],id,1); // direct
 
 	if(value < 0) show_required_kills(id);
-	else client_cmd(id,"speak ^"buttons/bell1.wav^"");
+	else client_cmd(id,"spk ^"buttons/bell1.wav^"");
 	
 	new sdisplay = get_pcvar_num(gg_status_display);
 	if(sdisplay == STATUS_KILLSLEFT || sdisplay == STATUS_KILLSDONE)
@@ -4890,10 +4966,21 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0,play_sou
 				}
 				else
 				{
-					static numWord[16];
+					static numWord[16], digiWord[3], lang[3];
 					num_to_word(numLeaders-1,numWord,15);
 					trim(numWord);
-					gungame_print(0,id,1,"%L",LANG_PLAYER_C,"TIED_LEADER_MULTI",name,leaderLevel,lvlWeapon[id],numWord);
+					formatex(digiWord,2,"%i",numLeaders-1);
+					
+					new player;
+					for(player=1;player<=maxPlayers;player++)
+					{
+						if(is_user_connected(player))
+						{
+							// use word for english, digit otherwise
+							get_user_info(player,"lang",lang,2);
+							gungame_print(player,id,1,"%L",player,"TIED_LEADER_MULTI",name,leaderLevel,lvlWeapon[id],equali(lang,"en") ? numWord : digiWord);	
+						}
+					}
 				}
 			}
 
@@ -4937,49 +5024,46 @@ stock change_level(id,value,just_joined=0,show_message=1,always_score=0,play_sou
 		gungame_print(0,id,1,"%L",LANG_PLAYER_C,"TRIPLE_LEVELED",name);
 		set_task(10.0,"end_star",TASK_END_STAR+id);
 	}
-	
-	// does this mod support friendlyfire?
-	if(mp_friendlyfire)
+
+	new ff_auto = get_pcvar_num(gg_ff_auto), ff = get_pcvar_num(mp_friendlyfire);
+
+	// turn on FF?
+	if(ff_auto && !ff && nade)
 	{
-		// we don't bother with pcvars in here because they have some sketchy bugs about them!
-		// maybe these are fixed in AMXX 1.8? who knows!
+		server_cmd("mp_friendlyfire 1"); // so console is notified
+		set_pcvar_num(mp_friendlyfire,1); // so it changes instantly
 
-		new ff_auto = get_pcvar_num(gg_ff_auto), ff = get_cvar_num("mp_friendlyfire");
+		gungame_print(0,0,1,"%L",LANG_PLAYER_C,"FRIENDLYFIRE_ON");
 
-		// turn on FF?
-		if(ff_auto && !ff && nade)
+		client_cmd(0,"spk ^"gungame/brass_bell_C.wav^"");
+	}
+
+	// turn off FF?
+	else if(ff_auto && ff)
+	{
+		new keepFF, player;
+
+		for(player=1;player<=maxPlayers;player++)
 		{
-			server_cmd("mp_friendlyfire 1"); // so console is notified
-			set_cvar_num("mp_friendlyfire",1); // so it changes instantly
-
-			gungame_print(0,0,1,"%L",LANG_PLAYER_C,"FRIENDLYFIRE_ON");
-
-			client_cmd(0,"speak ^"gungame/brass_bell_C.wav^"");
+			if(equal(lvlWeapon[player],"hegrenade") || equal(lvlWeapon[player],"knife"))
+			{
+				keepFF = 1;
+				break;
+			}
 		}
 
-		// turn off FF?
-		else if(ff_auto && ff)
+		// no one is on nade or knife level anymore
+		if(!keepFF)
 		{
-			new keepFF, player;
-
-			for(player=1;player<=maxPlayers;player++)
-			{
-				if(equal(lvlWeapon[player],"hegrenade") || equal(lvlWeapon[player],"knife"))
-				{
-					keepFF = 1;
-					break;
-				}
-			}
-
-			// no one is on nade or knife level anymore
-			if(!keepFF)
-			{
-				server_cmd("mp_friendlyfire 0"); // so console is notified
-				set_cvar_num("mp_friendlyfire",0); // so it changes instantly
-			}
+			server_cmd("mp_friendlyfire 0"); // so console is notified
+			set_pcvar_num(mp_friendlyfire,0); // so it changes instantly
 		}
 	}
-	
+
+	// some bots are actually allergic to the chemicals used in HE grenades
+	if(is_user_bot(id) && get_pcvar_num(gg_bots_skipnade) && !get_pcvar_num(gg_teamplay) && equal(lvlWeapon[id],"hegrenade"))
+		change_level(id,1);
+
 	return 1;
 }
 
@@ -5074,23 +5158,23 @@ stock give_level_weapon(id,notify=1,verify=1)
 	static wpnName[24];
 	new weapons = pev(id,pev_weapons), wpnid, alright, myCategory, hasMain;
 
-	new ammo = get_pcvar_num(gg_ammo_amount);
-	new knife_elite = get_pcvar_num(gg_knife_elite);
-	new pickup_others = get_pcvar_num(gg_pickup_others);
-	new mainCategory = get_weapon_category(_,lvlWeapon[id]);
+	new ammo = get_pcvar_num(gg_ammo_amount),
+	knife_elite = get_pcvar_num(gg_knife_elite),
+	pickup_others = (get_pcvar_num(gg_pickup_others) && (!knife_elite || !levelsThisRound[id])),
+	mainCategory = get_weapon_category(_,lvlWeapon[id]);
 
-	new hasGlock, hasSmoke, hasFlash;
-	new nade_level = (equal(lvlWeapon[id],"hegrenade"));
-	new nade_glock = get_pcvar_num(gg_nade_glock);
-	new nade_smoke = get_pcvar_num(gg_nade_smoke);
-	new nade_flash = get_pcvar_num(gg_nade_flash);
+	new hasGlock, hasSmoke, hasFlash,
+	nade_level = (equal(lvlWeapon[id],"hegrenade")),
+	nade_glock = get_pcvar_num(gg_nade_glock),
+	nade_smoke = get_pcvar_num(gg_nade_smoke),
+	nade_flash = get_pcvar_num(gg_nade_flash);
 
 	new melee_only = ((warmup > 0 && warmupWeapon[0] && equal(warmupWeapon,"knife")) || (knife_elite && levelsThisRound[id] > 0));
 
 	// remove stuff first
 	for(wpnid=1;wpnid<31;wpnid++)
 	{
-		// don't have this, or it's the C$
+		// don't have this, or it's the C4
 		if(!(weapons & (1<<wpnid)) || wpnid == CSW_C4) continue;
 
 		alright = 0;
@@ -5162,25 +5246,16 @@ stock give_level_weapon(id,notify=1,verify=1)
 			// we should probably remove this weapon
 			else
 			{
+				myCategory = get_weapon_category(wpnid);
+
 				// pistol in the way of glock, remove it
-				if(nade_glock && (wpnid == CSW_USP || wpnid == CSW_DEAGLE
-					|| wpnid == CSW_P228 || wpnid == CSW_FIVESEVEN || wpnid == CSW_ELITE))
-				{
-					ham_strip_weapon(id,wpnName);
-				}
+				if(nade_level && nade_glock && myCategory == 2) ham_strip_weapon(id,wpnName);
 				else
 				{
-					myCategory = get_weapon_category(wpnid);
-
 					// we aren't allowed to have any other weapons,
 					// or this is in the way of the weapon that I want.
 					if(!pickup_others || myCategory == mainCategory)
-					{
-						// if this isn't a melee weapon, disregard this. if it is, only strip
-						// it if it's really in the way of the weapon that I want.
-						if(!equal(wpnName,"weapon_knife") || myCategory == mainCategory)	
-							ham_strip_weapon(id,wpnName);
-					}
+						ham_strip_weapon(id,wpnName);
 				}
 			}/*not alright*/
 		}/*not a knife*/
@@ -5351,7 +5426,7 @@ win(winner,loser)
 		write_string(""); // although you could put a nice typewrite-style centersay here
 		message_end();
 		
-		// freeze and godmode everyone
+		// godmode everyone
 		new fullName[32];
 		for(player=1;player<=maxPlayers;player++)
 		{
@@ -5360,6 +5435,8 @@ win(winner,loser)
 			// finale won't stop players from shooting technically
 			formatex(fullName,31,"weapon_%s",lvlWeapon[player]);
 			ham_strip_weapon(player,fullName);
+
+			fm_set_user_godmode(player,1);
 		}
 	}
 
@@ -5473,6 +5550,7 @@ public stop_win_sound()
 public show_win_screen(params[2]) // [winner,loser]
 {
 	new winner = params[0], loser = params[1], motd[2048], len, header[32];
+	if(!is_user_connected(winner)) return 0;
 
 	new teamplay = get_pcvar_num(gg_teamplay), stats_mode = get_pcvar_num(gg_stats_mode),
 	timeratio = get_pcvar_num(gg_teamplay_timeratio), iterations = get_pcvar_num(gg_map_iterations),
@@ -5530,7 +5608,11 @@ public show_win_screen(params[2]) // [winner,loser]
 				else
 					len += formatex(motd[len],2047-len,"%L<p>",player,"WIN_MOTD_LINE5A",winnerColor,winnerName,pointsExtraction[winner][0],winnerWinSuffix);
 				
-				len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",floatround(teamTimes[player][winningTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1])*100.0));
+				// no play time
+				if(teamTimes[player][winningTeam-1] < 1.0 && teamTimes[player][losingTeam-1] < 1.0)
+					len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",0);
+				else
+					len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",floatround(teamTimes[player][winningTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1])*100.0));
 			}
 			else len += formatex(motd[len],2047-len,"%L<p>",player,"WIN_MOTD_LINE5A",winnerColor,winnerName,pointsExtraction[winner][0],winnerWinSuffix);
 			
@@ -5553,7 +5635,11 @@ public show_win_screen(params[2]) // [winner,loser]
 				else
 					len += formatex(motd[len],2047-len,"%L<p>",player,"WIN_MOTD_LINE5C",winnerColor,winnerName,pointsExtraction[winner][0],winnerWinSuffix,pointsExtraction[winner][2]);
 				
-				len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",floatround(teamTimes[player][winningTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1])*100.0));
+				// no play time
+				if(teamTimes[player][winningTeam-1] < 1.0 && teamTimes[player][losingTeam-1] < 1.0)
+					len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",0);
+				else
+					len += formatex(motd[len],2047-len,"%L<br>",player,"WIN_MOTD_LINE6",floatround(teamTimes[player][winningTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1])*100.0));
 			}
 			else len += formatex(motd[len],2047-len,"%L<p>",player,"WIN_MOTD_LINE5C",winnerColor,winnerName,pointsExtraction[winner][0],winnerWinSuffix,pointsExtraction[winner][2]);
 			
@@ -5879,6 +5965,10 @@ stats_award_points(winner)
 			// point ratio based on time played in teamplay
 			if(teamplay && timeratio)
 			{
+				// no play time
+				if(teamTimes[player][winningTeam-1] < 1.0 && teamTimes[player][losingTeam-1] < 1.0)
+					continue;
+
 				// give us points from losing team
 				flPoints = (float(teamLevel[losingTeam]) - 1.0) * teamTimes[player][losingTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1]);
 
@@ -5929,6 +6019,10 @@ stats_award_points(winner)
 			player = players[i];
 			if(_:cs_get_user_team(player) == winningTeam && (!ignore_bots || !is_user_bot(player)))
 			{
+				// no play time
+				if(teamTimes[player][winningTeam-1] < 1.0 && teamTimes[player][losingTeam-1] < 1.0)
+					continue;
+
 				// have to play at least half to get a win
 				if(!timeratio || teamTimes[player][winningTeam-1]/(teamTimes[player][winningTeam-1]+teamTimes[player][losingTeam-1]) >= 0.5)
 					playerWins[i] = 1;
@@ -6148,7 +6242,7 @@ stats_get_top_players()
 	glStatsMode = get_pcvar_num(gg_stats_mode);
 	ArraySort(statsArray,"stats_custom_compare");
 	
-	statsSize =	ArraySize(statsArray);
+	statsSize = ArraySize(statsArray);
 	if(statsSize > 1000) statsSize = 1000; // arbitrarily limit because we have to look through this every time someone connects
 	
 	// assign stat position to players already in the game
@@ -6293,7 +6387,7 @@ public delayed_suicide(taskid)
 }
 
 // remove those annoying pesky pistols, if they haven't been already
-public strip_starting_pistols(id)
+strip_starting_pistols(id)
 {
 	if(!is_user_alive(id)) return;
 
@@ -6302,16 +6396,12 @@ public strip_starting_pistols(id)
 		case CS_TEAM_T:
 		{
 			if(!equal(lvlWeapon[id],"glock18") && user_has_weapon(id,CSW_GLOCK18))
-			{
 				ham_strip_weapon(id,"weapon_glock18");
-			}
 		}
 		case CS_TEAM_CT:
 		{
 			if(!equal(lvlWeapon[id],"usp") && user_has_weapon(id,CSW_USP))
-			{
 				ham_strip_weapon(id,"weapon_usp");
-			}
 		}
 	}
 }
@@ -6337,7 +6427,7 @@ stock status_display(id,status=1)
 	if(!status || warmup > 0)
 	{
 		// don't send to bots
-		if(!id || !is_user_bot(id))
+		if(dest == MSG_BROADCAST || !is_user_bot(id))
 		{
 			message_begin(dest,gmsgScenario,_,id);
 			write_byte(0);
@@ -6415,6 +6505,17 @@ public hide_money(id)
 // SUPPORT FUNCTIONS
 //**********************************************************************
 
+// gets a players info, intended for other plugins to callback
+public get_player_info(id,&rf_level,&rf_score,rf_lvlWeapon[],len,&rf_spawnProtected,&rf_statsPosition)
+{
+	rf_level = level[id];
+	rf_score = score[id];
+	formatex(rf_lvlWeapon,len,"%s",lvlWeapon[id]);
+	rf_spawnProtected = spawnProtected[id];
+	rf_statsPosition = statsPosition[id];
+	return 1;
+}
+
 // analyzes the weapon order and saves it into our variables
 public setup_weapon_order()
 {
@@ -6479,7 +6580,11 @@ stock get_level_goal(level,id=0)
 	if(level < 1) return 1;
 
 	// no teamplay, return preset goal
-	if(!is_user_connected(id) || !get_pcvar_num(gg_teamplay)) return floatround(weaponGoal[level-1],floatround_ceil);
+	if(!is_user_connected(id) || !get_pcvar_num(gg_teamplay))
+	{
+		if(is_user_bot(id)) return floatround(weaponGoal[level-1]*get_pcvar_float(gg_kills_botmod),floatround_ceil);
+		return floatround(weaponGoal[level-1],floatround_ceil);
+	}
 
 	// one of this for every player on team
 	new Float:result = weaponGoal[level-1] * float(team_player_count(cs_get_user_team(id)));
@@ -6505,7 +6610,7 @@ stock precache_sound_by_cvar(pcvar)
 {
 	new value[64];
 	get_pcvar_string(pcvar,value,63);
-	precache_generic(value);
+	if(value[0]) precache_generic(value);
 }
 
 // figure out which gungame.cfg file to use
@@ -6561,15 +6666,15 @@ stock get_gg_mapcycle_file(filename[],len)
 }
 
 // another easy function to play sound via cvar
-stock play_sound_by_cvar(id,cvar)
+stock play_sound_by_cvar(id,pcvar)
 {
 	static value[64];
-	get_pcvar_string(cvar,value,63);
+	get_pcvar_string(pcvar,value,63);
 
 	if(!value[0]) return;
 
 	if(containi(value,".mp3") != -1) client_cmd(id,"mp3 play ^"%s^"",value);
-	else client_cmd(id,"speak ^"%s^"",value);
+	else client_cmd(id,"spk ^"%s^"",value);
 }
 
 // a taskable play_sound_by_cvar
@@ -6586,8 +6691,8 @@ stock play_sound(id,value[])
 	if(containi(value,".mp3") != -1) client_cmd(id,"mp3 play ^"%s^"",value);
 	else
 	{
-		if(equali(value,"sound/",6)) client_cmd(id,"speak ^"%s^"",value[6]);
-		else client_cmd(id,"speak ^"%s^"",value);
+		if(equali(value,"sound/",6)) client_cmd(id,"spk ^"%s^"",value[6]);
+		else client_cmd(id,"spk ^"%s^"",value);
 	}
 }
 
@@ -6639,8 +6744,10 @@ stock num_players_on_level(checkLvl)
 	return result;
 }
 
-// a butchered version of teame06's CS Color Chat Function
-public gungame_print(id,custom,tag,msg[],any:...)
+// a butchered version of teame06's CS Color Chat Function.
+// actually it's now almost completely different, but that's
+// where I started from.
+gungame_print(id,custom,tag,msg[],any:...)
 {
 	new changeCount, num, i, j, argnum = numargs(), player;
 	static newMsg[191], message[191], changed[5], players[32];
@@ -6658,6 +6765,8 @@ public gungame_print(id,custom,tag,msg[],any:...)
 	{
 		player = players[i];
 		changeCount = 0;
+		
+		if(!is_user_connected(player)) continue;
 
 		// we have to change LANG_PLAYER into
 		// a player-specific argument, because
@@ -6711,7 +6820,7 @@ public gungame_print(id,custom,tag,msg[],any:...)
 }
 
 // show a HUD message to a user
-public gungame_hudmessage(id,Float:holdTime,msg[],{Float,Sql,Result,_}:...)
+gungame_hudmessage(id,Float:holdTime,msg[],any:...)
 {
 	// user formatting
 	static newMsg[191];
@@ -6828,7 +6937,7 @@ stock set_nextmap()
 	if(!mapCycleFile[0] || !file_exists(mapCycleFile))
 	{
 		set_localinfo("gg_cycle_num","0");
-		return;
+		return 0;
 	}
 
 	new strVal[10];
@@ -6903,13 +7012,13 @@ stock set_nextmap()
 		// go to first map listed
 		else set_cvar_string("amx_nextmap",firstMap);
 	}
+	
+	return 1;
 }
 
 // go to amx_nextmap
 public goto_nextmap()
 {
-	set_nextmap(); // for good measure
-
 	new mapCycleFile[64];
 	get_gg_mapcycle_file(mapCycleFile,63);
 
@@ -7074,21 +7183,22 @@ stock only_bots()
 
 // gives a player a weapon efficiently
 stock ham_give_weapon(id,weapon[])
-{	
+{
 	if(!equal(weapon,"weapon_",7)) return 0;
-	
+
 	new wEnt = engfunc(EngFunc_CreateNamedEntity,engfunc(EngFunc_AllocString,weapon));
 	if(!pev_valid(wEnt)) return 0;
-	
+
 	set_pev(wEnt,pev_spawnflags,SF_NORESPAWN);
 	dllfunc(DLLFunc_Spawn,wEnt);
 	
-	if(!ExecuteHamB(Ham_AddPlayerItem,id,wEnt) || !ExecuteHamB(Ham_Item_AttachToPlayer,wEnt,id))
+	if(!ExecuteHamB(Ham_AddPlayerItem,id,wEnt))
 	{
-		if(pev_valid(wEnt)) set_pev(wEnt,pev_flags,pev(wEnt,pev_flags) & FL_KILLME);
+		if(pev_valid(wEnt)) set_pev(wEnt,pev_flags,pev(wEnt,pev_flags) | FL_KILLME);
 		return 0;
 	}
 
+	ExecuteHamB(Ham_Item_AttachToPlayer,wEnt,id)
 	return 1;
 }
 
@@ -7096,22 +7206,27 @@ stock ham_give_weapon(id,weapon[])
 stock ham_strip_weapon(id,weapon[])
 {
 	if(!equal(weapon,"weapon_",7)) return 0;
-	
+
 	new wId = get_weaponid(weapon);
 	if(!wId) return 0;
 
-	new wEnt = fm_find_ent_by_owner(maxPlayers,weapon,id);
+	new wEnt;
+	while((wEnt = engfunc(EngFunc_FindEntityByString,wEnt,"classname",weapon)) && pev(wEnt,pev_owner) != id) {}
 	if(!wEnt) return 0;
-	
-	new weapon = get_user_weapon(id);
-	if(weapon == wId) ExecuteHamB(Ham_Weapon_RetireWeapon,wEnt);
-	
+
+	if(get_user_weapon(id) == wId) ExecuteHamB(Ham_Weapon_RetireWeapon,wEnt);
+
 	if(!ExecuteHamB(Ham_RemovePlayerItem,id,wEnt)) return 0;
 	ExecuteHamB(Ham_Item_Kill,wEnt);
 
 	set_pev(id,pev_weapons,pev(id,pev_weapons) & ~(1<<wId));
-
-	if(wId == CSW_C4 || wId == CSW_SMOKEGRENADE || wId == CSW_FLASHBANG || wId == CSW_HEGRENADE)
+	
+	if(wId == CSW_C4)
+	{
+		cs_set_user_plant(id,0,0);
+		cs_set_user_bpammo(id,CSW_C4,0);
+	}
+	else if(wId == CSW_SMOKEGRENADE || wId == CSW_FLASHBANG || wId == CSW_HEGRENADE)
 		cs_set_user_bpammo(id,wId,0);
 
 	return 1;

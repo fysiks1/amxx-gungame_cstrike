@@ -28,13 +28,14 @@
 #include <cstrike>
 
 // defines
-#define GG_VERSION		"1.16b"
+#define GG_VERSION		"1.17"
 #define TOP_PLAYERS		10 // for !top10
 #define MAX_SPAWNS		128 // for gg_dm_spawn_random
 #define COMMAND_ACCESS		ADMIN_CVAR // for amx_gungame
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define MAX_WEAPON_ORDERS	10 // for random gg_weapon_order
 #define TEMP_SAVES		32 // for gg_save_temp
+#define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 
 // gg_status_display
 enum
@@ -81,6 +82,7 @@ enum
 #define TASK_WARMUP_CHECK	900
 #define TASK_VERIFY_WEAPON	1000
 #define TASK_DELAYED_SUICIDE	1100
+#define TASK_REFRESH_NADE	1200
 
 // hud channels
 #define CHANNEL_STATUS		3
@@ -110,7 +112,7 @@ gg_dm_countdown, gg_status_display, gg_dm_spawn_afterplant, gg_block_objectives,
 gg_stats_mode, gg_pickup_others, gg_stats_winbonus, gg_map_iterations, gg_warmup_multi,
 gg_host_kill_penalty, gg_dm_start_random, gg_stats_ip, gg_extra_nades, gg_endmap_setup,
 gg_allow_changeteam, gg_autovote_rounds, gg_autovote_ratio, gg_autovote_delay,
-gg_autovote_time, gg_ignore_bots;
+gg_autovote_time, gg_ignore_bots, gg_nade_refresh, gg_block_equips;
 
 // max clip
 stock const maxClip[31] = { -1, 13, -1, 10,  1,  7,  1,  30, 30,  1,  30,  20,  25, 30, 35, 25,  12,  20,
@@ -178,6 +180,7 @@ public plugin_init()
 	register_event("DeathMsg","event_deathmsg","a");
 	register_event("ResetHUD","event_resethud","b");
 	register_event("CurWeapon","event_curweapon","b","1=1");
+	register_event("AmmoX","event_ammox","b");
 	register_event("HLTV","event_new_round","a","1=0","2=0"); // VEN
 	register_event("TextMsg","event_round_restart","a","2=#Game_Commencing","2=#Game_will_restart_in");
 	register_event("30","event_intermission","a");
@@ -225,18 +228,19 @@ public plugin_init()
 	register_menucmd(level_menu,1023,"level_menu_handler");
 
 	// basic cvars
-	gg_enabled = register_cvar("gg_enabled","1",FCVAR_SERVER);
+	gg_enabled = register_cvar("gg_enabled","1");
 	gg_vote_setting = register_cvar("gg_vote_setting","1");
 	gg_vote_custom = register_cvar("gg_vote_custom","");
 	gg_changelevel_custom = register_cvar("gg_changelevel_custom","");
 	gg_map_setup = register_cvar("gg_map_setup","mp_timelimit 45; mp_winlimit 0; sv_alltalk 0; mp_chattime 10; mp_c4timer 25");
-	gg_endmap_setup = register_cvar("gg_endmap_setup","exec server.cfg");
+	gg_endmap_setup = register_cvar("gg_endmap_setup","");
 	gg_join_msg = register_cvar("gg_join_msg","1");
 	gg_colored_messages = register_cvar("gg_colored_messages","1");
 	gg_save_temp = register_cvar("gg_save_temp","300"); // = 5 * 60 = 5 minutes
 	gg_status_display = register_cvar("gg_status_display","0");
 	gg_map_iterations = register_cvar("gg_map_iterations","1");
 	gg_ignore_bots = register_cvar("gg_ignore_bots","0");
+	gg_block_equips = register_cvar("gg_block_equips","0");
 
 	// autovote cvars
 	gg_autovote_rounds = register_cvar("gg_autovote_rounds","0");
@@ -289,6 +293,7 @@ public plugin_init()
 	gg_nade_smoke = register_cvar("gg_nade_smoke","0");
 	gg_nade_flash = register_cvar("gg_nade_flash","0");
 	gg_extra_nades = register_cvar("gg_extra_nades","0");
+	gg_nade_refresh = register_cvar("gg_nade_refresh","0.0");
 	gg_kills_per_lvl = register_cvar("gg_kills_per_lvl","1");
 	gg_give_armor = register_cvar("gg_give_armor","100");
 	gg_give_helmet = register_cvar("gg_give_helmet","1");
@@ -356,7 +361,7 @@ public plugin_init()
 				continue;
 
 			// BREAK IT UP!
-			parse(sfLineData,csdmData[0],5,csdmData[1],5,csdmData[2],5,csdmData[3],5,csdmData[4],5,csdmData[5],5,csdmData[6],5,csdmData[7],5,csdmData[8],5,csdmData[9],1);
+			parse(sfLineData,csdmData[0],5,csdmData[1],5,csdmData[2],5,csdmData[3],5,csdmData[4],5,csdmData[5],5,csdmData[6],5,csdmData[7],5,csdmData[8],5,csdmData[9],5);
 
 			// origin
 			spawns[spawnCount][0] = floatstr(csdmData[0]);
@@ -368,10 +373,12 @@ public plugin_init()
 			spawns[spawnCount][4] = floatstr(csdmData[4]);
 			spawns[spawnCount][5] = floatstr(csdmData[5]);
 
+			// team, csdmData[6], unused
+
 			// vangles
-			spawns[spawnCount][6] = floatstr(csdmData[6]);
-			spawns[spawnCount][7] = floatstr(csdmData[7]);
-			spawns[spawnCount][8] = floatstr(csdmData[8]);
+			spawns[spawnCount][6] = floatstr(csdmData[7]);
+			spawns[spawnCount][7] = floatstr(csdmData[8]);
+			spawns[spawnCount][8] = floatstr(csdmData[9]);
 
 			spawnCount++;
 			csdmSpawnCount++;
@@ -434,7 +441,11 @@ public plugin_init()
 		}
 	}
 
-	toggle_gungame(TASK_TOGGLE_GUNGAME + TOGGLE_FORCE);
+	// delay for server.cfg
+	set_task(1.0,"toggle_gungame",TASK_TOGGLE_GUNGAME + TOGGLE_FORCE);
+
+	// manage pruning (longer delay for toggle_gungame)
+	set_task(2.0,"manage_pruning");
 }
 
 // plugin ends, prune stats file maybe
@@ -445,9 +456,28 @@ public plugin_end()
 	{
 		new setup[512];
 		get_pcvar_string(gg_endmap_setup,setup,511);
-		server_cmd(setup);
+		if(setup[0]) server_cmd(setup);
 	}
+}
 
+// setup native filter for cs_respawn
+public plugin_natives()
+{
+	set_native_filter("native_filter");
+}
+
+// don't throw error on cs_respawn if not running module
+public native_filter(const name[],index,trap)
+{
+	if(equal(name,"cs_respawn"))
+		return PLUGIN_HANDLED;
+
+	return PLUGIN_CONTINUE;
+}
+
+// manage stats pruning
+public manage_pruning()
+{
 	get_pcvar_string(gg_stats_file,sfFile,63);
 
 	// stats disabled/file doesn't exist/pruning disabled
@@ -479,21 +509,6 @@ public plugin_end()
 	// decrement our count
 	num_to_str(prune_in-1,prune_in_str,2);
 	set_localinfo("gg_prune_in",prune_in_str);
-}
-
-// setup native filter for cs_respawn
-public plugin_natives()
-{
-	set_native_filter("native_filter");
-}
-
-// don't throw error on cs_respawn if not running module
-public native_filter(const name[],index,trap)
-{
-	if(equal(name,"cs_respawn"))
-		return PLUGIN_HANDLED;
-
-	return PLUGIN_CONTINUE;
 }
 
 // manage warmup mode
@@ -595,6 +610,7 @@ public client_disconnect(id)
 	remove_task(TASK_REMOVE_PROTECTION+id);
 	remove_task(TASK_VERIFY_WEAPON+id);
 	remove_task(TASK_DELAYED_SUICIDE+id);
+	remove_task(TASK_REFRESH_NADE+id);
 
 	// clear bomb planter
 	if(c4planter == id) c4planter = 0;
@@ -1193,7 +1209,10 @@ public event_deathmsg()
 	}
 
 	if(equal(weapon[killer],"hegrenade") && get_pcvar_num(gg_extra_nades) && !cs_get_user_bpammo(killer,CSW_HEGRENADE))
+	{
 		fm_give_item(killer,"weapon_hegrenade");
+		remove_task(TASK_REFRESH_NADE+killer);
+	}
 
 	if((!scored || !get_pcvar_num(gg_turbo)) && get_pcvar_num(gg_refill_on_kill))
 		refill_ammo(killer,1);
@@ -1231,6 +1250,32 @@ public event_curweapon(id)
 	}
 }
 
+// ammo amount changes
+public event_ammox(id)
+{
+	new type = read_data(1);
+
+	// not HE grenade ammo, or not on the grenade level
+	if(type != 12 || !equali(weapon[id],"hegrenade")) return;
+
+	new amount = read_data(2);
+
+	// still have some left, ignore
+	if(amount > 0)
+	{
+		remove_task(TASK_REFRESH_NADE+id);
+		return;
+	}
+
+	new Float:refresh = get_pcvar_float(gg_nade_refresh);
+
+	// refreshing is disabled, or we are already giving one out
+	if(refresh <= 0.0 || task_exists(TASK_REFRESH_NADE+id)) return;
+
+	// start the timer for the new grenade
+	set_task(refresh,"refresh_nade",TASK_REFRESH_NADE+id);
+}
+
 // a new round has begun
 public event_new_round()
 {
@@ -1246,6 +1291,9 @@ public event_new_round()
 			set_task(get_pcvar_float(gg_autovote_delay),"autovote_start");
 		}
 	}
+
+	// game_player_equip
+	manage_equips();
 
 	if(!get_pcvar_num(gg_enabled)) return;
 
@@ -1300,6 +1348,56 @@ public randomly_place_everyone()
 		// not spectator or unassigned
 		if(team == CS_TEAM_T || team == CS_TEAM_CT)
 			do_random_spawn(players[i],2);
+	}
+}
+
+// manage game_player_equip and player_weaponstrip entities
+public manage_equips()
+{
+	static classname[20], targetname[256];
+	new ent, i, block_equips = get_pcvar_num(gg_block_equips), enabled = get_pcvar_num(gg_enabled);
+
+	// go through both entities to monitor
+	for(i=0;i<2;i++)
+	{
+		// get classname for current iteration
+		switch(i)
+		{
+			case 0: classname = "game_player_equip";
+			default: classname = "player_weaponstrip";
+		}
+
+		// go through whatever entity
+		while((ent = fm_find_ent_by_class(ent,classname)) != 0)
+		{
+			pev(ent,pev_targetname,targetname,255);
+
+			// allowed to have this, reverse possible changes
+			if(!enabled || !block_equips || (i == 1 && block_equips < 2)) // player_weaponstrip switch
+			{
+				// this one was blocked
+				if(equali(targetname,"gg_block_equips"))
+				{
+					pev(ent,TNAME_SAVE,targetname,255);
+
+					set_pev(ent,pev_targetname,targetname);
+					set_pev(ent,TNAME_SAVE,"");
+				}
+			}
+
+			// not allowed to pickup others, make possible changes
+			else
+			{
+				pev(ent,pev_targetname,targetname,255);
+
+				// needs to be blocked, but hasn't been yet
+				if(targetname[0] && !equali(targetname,"gg_block_equips"))
+				{
+					set_pev(ent,TNAME_SAVE,targetname);
+					set_pev(ent,pev_targetname,"gg_block_equips");
+				}
+			}
+		}
 	}
 }
 
@@ -1874,7 +1972,7 @@ public cmd_say(id)
 		console_print(id,"%L",id,"RULES_CONSOLE_LINE7",num++);
 		if(get_pcvar_num(gg_knife_pro)) console_print(id,"%L",id,"RULES_CONSOLE_LINE8",num++);
 		if(turbo) console_print(id,"%L",id,"RULES_CONSOLE_LINE9",num++);
-		if(get_pcvar_num(gg_dm)) console_print(id,"%L",id,"RULES_CONSOLE_LINE10",num++);
+		if(get_pcvar_num(gg_dm) || get_cvar_num("csdm_active")) console_print(id,"%L",id,"RULES_CONSOLE_LINE10",num++);
 		console_print(id,"****************************************************************");
 		console_print(id,"%L",id,"RULES_CONSOLE_LINE11");
 		console_print(id,"%L",id,"RULES_CONSOLE_LINE12");
@@ -2055,11 +2153,11 @@ public toggle_gungame(taskid)
 	// set to what we chose from amx_gungame
 	if(status != TOGGLE_FORCE) set_pcvar_num(gg_enabled,status);
 
-	// run appropiate cvars
-	map_start_cvars();
-
 	// execute all of those cvars that we just set
 	server_exec();
+
+	// run appropiate cvars
+	map_start_cvars();
 
 	// reset some things
 	if(!get_pcvar_num(gg_enabled))
@@ -2079,6 +2177,9 @@ public toggle_gungame(taskid)
 	}
 
 	stats_get_top_players(TOP_PLAYERS,top10,80);
+
+	// game_player_equip
+	manage_equips();
 }
 
 // run cvars that should be run on map start
@@ -2090,13 +2191,13 @@ public map_start_cvars()
 	if(!get_pcvar_num(gg_enabled))
 	{
 		get_pcvar_string(gg_endmap_setup,setup,511);
-		server_cmd(setup);
+		if(setup[0]) server_cmd(setup);
 	}
 	else
 	{
 		// run map setup
 		get_pcvar_string(gg_map_setup,setup,511);
-		server_cmd(setup);
+		if(setup[0]) server_cmd(setup);
 
 		// warmup is -13 after its finished, this stops multiple warmups for multiple map iterations
 		new warmup_value = get_pcvar_num(gg_warmup_timer_setting);
@@ -2636,6 +2737,22 @@ public scores_menu_handler(id,key)
 // MAIN FUNCTIONS
 //
 
+// refresh a player's hegrenade stock
+public refresh_nade(taskid)
+{
+	new id = taskid-TASK_REFRESH_NADE;
+
+	// player left, player respawned, or GunGame turned off
+	if(!is_user_connected(id) || is_user_alive(id) || !get_pcvar_num(gg_enabled)) return;
+
+	// not on the grenade level, or have one already
+	if(!equali(weapon[id],"hegrenade") || cs_get_user_bpammo(id,CSW_HEGRENADE))
+		return;
+
+	// give another hegrenade
+	fm_give_item(id,"weapon_hegrenade");
+}
+
 // keep checking if a player needs to rejoin
 public check_deathmatch(taskid)
 {
@@ -2691,7 +2808,7 @@ public show_welcome(id)
 		len += formatex(menuText[len],511-len,"%L^n",id,"WELCOME_MESSAGE_LINE3");
 		special = 1;
 	}
-	if(get_pcvar_num(gg_dm))
+	if(get_pcvar_num(gg_dm) || get_cvar_num("csdm_active"))
 	{
 		len += formatex(menuText[len],511-len,"%L^n",id,"WELCOME_MESSAGE_LINE4");
 		special = 1;
@@ -3207,6 +3324,8 @@ stock give_level_weapon(id,notify=1,verify=1)
 				break;
 		}
 
+		remove_task(TASK_REFRESH_NADE+id);
+
 		if(!equal(weapon[id],"hegrenade"))
 		{
 			wpnid = get_weaponid(wpnName);
@@ -3614,22 +3733,6 @@ win(id)
 		{
 			player = players[i];
 
-			// log it
-			get_user_name(player,myName,31);
-
-			if(stats_ip) get_user_ip(player,authid,23);
-			else get_user_authid(player,authid,23);
-
-			get_user_team(player,team,9);
-			log_message("^"%s<%i><%s><%s>^" triggered ^"GunGame_Points^" amount ^"%i^"",myName,get_user_userid(player),authid,team,iPoints);
-
-			// display it
-			gungame_print(player,0,"%L",player,"GAINED_POINTS",iPoints,totalPoints);
-
-			// don't count bots
-			if(ignore_bots && is_user_bot(player))
-				continue;
-
 			// calculate points and add
 			flPoints = float(level[player]) - 1.0;
 			wins = 0;
@@ -3645,7 +3748,22 @@ win(id)
 			if(flPoints <= 0.0 && !wins) continue;
 
 			iPoints = floatround(flPoints);
-			stats_add_to_score(player,wins,iPoints,dummy[0],totalPoints);
+
+			// it's okay to add to stats
+			if(!ignore_bots || !is_user_bot(id))
+				stats_add_to_score(player,wins,iPoints,dummy[0],totalPoints);
+
+			// log it
+			get_user_name(player,myName,31);
+
+			if(stats_ip) get_user_ip(player,authid,23);
+			else get_user_authid(player,authid,23);
+
+			get_user_team(player,team,9);
+			log_message("^"%s<%i><%s><%s>^" triggered ^"GunGame_Points^" amount ^"%i^"",myName,get_user_userid(player),authid,team,iPoints);
+
+			// display it
+			gungame_print(player,0,"%L",player,"GAINED_POINTS",iPoints,totalPoints);
 		}
 	}
 
@@ -4286,7 +4404,7 @@ get_gg_config_file(filename[],len)
 // figure out which gungame_mapcycle file to use
 get_gg_mapcycle_file(filename[],len)
 {
-	new testFile[64];
+	static testFile[64];
 
 	// cstrike/addons/amxmodx/configs/gungame_mapcycle.cfg
 	formatex(testFile,63,"%s/gungame_mapcycle.cfg",cfgDir);
@@ -4531,8 +4649,7 @@ set_nextmap()
 	// no mapcycle, leave amx_nextmap alone
 	if(!mapCycleFile[0] || !file_exists(mapCycleFile)) return;
 
-	new currentMap[32], firstMap[32], lineData[32], getNextMap,
-	i, filename[48], foundMap;
+	new currentMap[32], firstMap[32], lineData[32], getNextMap, i, foundMap/*, filename[48]*/;
 	get_mapname(currentMap,31);
 
 	new file = fopen(mapCycleFile,"rt");
@@ -4559,8 +4676,8 @@ set_nextmap()
 		if(!lineData[0]) continue;
 
 		// invalid map
-		formatex(filename,47,"maps/%s.bsp",lineData);
-		if(!file_exists(filename)) continue;
+		/*formatex(filename,47,"maps/%s.bsp",lineData);
+		if(!file_exists(filename)) continue;*/
 
 		// save first map
 		if(!firstMap[0]) formatex(firstMap,31,"%s",lineData);
@@ -4788,7 +4905,10 @@ stock refill_ammo(id,current=0)
 			fm_give_item(id,"weapon_flashbang");
 
 		if(!cs_get_user_bpammo(id,CSW_HEGRENADE))
+		{
 			fm_give_item(id,"weapon_hegrenade");
+			remove_task(TASK_REFRESH_NADE+id);
+		}
 	}
 
 	// keep knife out

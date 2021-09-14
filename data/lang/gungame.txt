@@ -713,89 +713,83 @@ WON = ganado
 
 [sv]
 CANCEL = Avbryt
-CLOSE = St'a'ng
-FRIENDLYFIRE_ON = %%CV'a'nskaplig Eld 'a'r aktiverad!!!%%e Var f'o'rsiktig!!!
-GAINED_POINTS = Du befodrades nyss till %%g%i%%e po'a'ng (%%g%i%%e totalt)!
+CLOSE = Stang
+FRIENDLYFIRE_ON = %%CVanskaplig Eld ar aktiverad!!!%%e Var forsiktig!!!
 GUNGAME = GunGame
-HK_LEVEL_DOWN = %%n%s%%e degraderades till level %%g%i%%e f'o'r att ha d'o'dat en i gisslan
-HK_SCORE_DOWN = %%n%s%%e f'o'rlorade %%g%i%%e po'a'ng f'o'r att ha d'o'dat en i gisslan
 KNIVES_ONLY = Endast kniv
 LEADING_ON_LEVEL = %%n%s%%e leder pa niva %%g%i%%e :: %%g%s%%e
 LEVEL = Niva
-LEVEL_MESSAGE_LINE1 = Du har gjort %i/%i av dina required d'o'dade
+LEVEL_MESSAGE_LINE1 = Du har dodat %i/%i
 LEVEL_MESSAGE_LINE2A = Du leder
-LEVEL_MESSAGE_LINE2B = Du 'a'r bunden vid f'o'rsta plats
-LEVEL_MESSAGE_LINE2C = Du 'a'r %i nivaer efter den som leder
-LEVEL_MESSAGE_LINE3A = Du har vunnit %i ganger
-LEVEL_MESSAGE_LINE3B = Du har samlat ihop %i po'a'ng
+LEVEL_MESSAGE_LINE2B = Du ar bunden vid forsta plats
+LEVEL_MESSAGE_LINE2C = Du ligger %i nivaer efter den som leder
+LEVEL_MESSAGE_LINE3 = Du har vunnit %i ganger
 LEVEL_MESSAGE_LINE4A = Nuvarande ledare: %s
 LEVEL_MESSAGE_LINE4B = Nuvarande ledare: %s
-LEVEL_MESSAGE_LINE5 = Den som leder 'a'r i niva: %i (%s)
-LEVELS_BEHIND_LEADER = Du 'a'r nu %%g%i%%e nivaer efter den som leder
-NEXT = N'a'sta
+LEVEL_MESSAGE_LINE5 = Den som leder ligger pa niva: %i (%s)
+LEVELS_BEHIND_LEADER = Du ligger nu %%g%i%%e nivaer efter den som leder
+NEXT = Nasta
 NONE = ingen
 NO_WIN_LOGGING = Denna server har vunnit inloggning nekad
-NOW_ON_LEVEL = Du 'a'r nu i niva
-ON_LEVEL = Du 'a'r i niva
-PLAY_GUNGAME = Spela GunGame?
-PLAYER_RESET = %%n%s%%e restartade sig sj'a'lv till niva %%g1%%e
-POINTS = po'a'ng
-PRESS_KEY_TO_CONTINUE = Tryck in en seriekod f'o'r att forts'a'tta
-PREVIOUS = F'o'regaende
-PROGRESS_DISPLAY = Du beh'o'ver %%n%i%%e d'o'dade f'o'r att bli befodraf. Resultat: %%n%i / %i%%e
-PRUNING = Bortklippta %s: %i anm'a'lan borttagna
-REQUIRED_KILLS = Kr'a'vda mord
-RESET_QUERY = 'A'r du S'A'KER pa att du vill^nstarta om tillbaks till niva 1?
+NOW_ON_LEVEL = Du ligger nu pa niva
+ON_LEVEL = Du ligger pa niva
+PLAYER_RESET = %%n%s%%e startade om till niva %%g1%%e
+PRESS_KEY_TO_CONTINUE = Tryck in seriekod for att fortsatta
+PREVIOUS = Foregaende
+PROGRESS_DISPLAY = Du maste doda %%n%i%%e till for att bli befodrad. Resultat: %%n%i / %i%%e
+PRUNING = Bortklippta %s: %i anmalan borttagna
+REQUIRED_KILLS = Kravda mord
+RESET_QUERY = Ar du SAKER pa att du vill^nstarta om pa niva 1?
 RESPAWN_COUNTDOWN = Du kommer respawna om %i sekunder
 RULES = Regler
-RULES_CONSOLE_LINE1 = %i) Du maste d'o'da en med ditt nuvarande vapen f'o'r att bli befodrad.
-RULES_CONSOLE_LINE2 = %i) Om du lyckas d'o'da en med ett vapen utan ammo, r'a'knas det inte och din nuvarande niva aterstar.
+RULES_CONSOLE_LINE1 = %i) Du maste doda en med ditt nuvarande vapen for att bli befodrad.
+RULES_CONSOLE_LINE2 = %i) Om du lyckas doda en med ett vapen utan ammo, raknas det inte och din nuvarande niva bestar.
 RULES_CONSOLE_LINE3 = %i) Du kan bli befodrad genom PLANTNING och DEFUSANDE.
-RULES_CONSOLE_LINE4 = %i) Om du begar sj'a'lvmord, kommer alla nivaer ga f'o'rlorade.
-RULES_CONSOLE_LINE5 = %i) CV'a'nskaplig Eld 'a'r aktiveras n'a'r nagon nar GRANATE nivan.
-RULES_CONSOLE_LINE6A = %i) You CAN gain more than one level per round.
-RULES_CONSOLE_LINE6B = %i) You can only gain one level per round.
-RULES_CONSOLE_LINE6C = %i) You can gain up to %i levels per round.
-RULES_CONSOLE_LINE7 = %i) There is a grace period at the end of each round to allow players to switch teams.
-RULES_CONSOLE_LINE8 = %i) Because Knife Pro is enabled, you can steal a level from an opponent by knifing them.
-RULES_CONSOLE_LINE9 = %i) Because Turbo Mode is enabled, you will receive your next weapon immediately when you level up.
-RULES_CONSOLE_LINE10 = %i) Because Deathmatch Mode is enabled, you will respawn infinitely.
-RULES_CONSOLE_LINE11 = Say !level to see your current level and who is winning.
-RULES_CONSOLE_LINE12 = Say !weapons to see the weapon order.
-RULES_CONSOLE_LINE13 = Say !score to see all player current scores.
-RULES_CONSOLE_LINE14 = Say !top10 to see the top 10 winners on the server.
-RULES_CONSOLE_LINE15 = Say !restart to reset you to level 1.
-RULES_MESSAGE_LINE1 = Game rules and all say commands are now listed in your console
-RULES_MESSAGE_LINE2 = Nagra anv'a'ndbara say kommandon:
+RULES_CONSOLE_LINE4 = %i) Om du begar sjalvmord, kommer alla nivaer ga forlorade.
+RULES_CONSOLE_LINE5 = %i) CVanskaplig Eld aktiveras da nagon nar GRANAT nivan.
+RULES_CONSOLE_LINE6A = %i) Du KAN uppna mer an en niva per runda.
+RULES_CONSOLE_LINE6B = %i) Du kan endast uppna en niva per runda.
+RULES_CONSOLE_LINE6C = %i) Du kan uppna upp till %i nivaer per runda.
+RULES_CONSOLE_LINE7 = %i) Det finns tillfalle vid slutet av varje runda att byta lag.
+RULES_CONSOLE_LINE8 = %i) Eftersom Knife Pro ar aktiverat, kan du stjala en niva fran motstandaren genom att kniva dem.
+RULES_CONSOLE_LINE9 = %i) Eftersom Turbo Mode ar aktiverat, kommer du omedelbart fa ditt nasta vapen da du graderas.
+RULES_CONSOLE_LINE10 = %i) Eftersom Deathmatch Mode ar aktiverat, kommer du inte respawna.
+RULES_CONSOLE_LINE11 = Skriv !level for att se din nuvarande niva och vem som leder.
+RULES_CONSOLE_LINE12 = Skriv !weapons for att se vapen forbrukningen.
+RULES_CONSOLE_LINE13 = Skriv !score for att se alla spelares nuvarande statistik.
+RULES_CONSOLE_LINE14 = Skriv !top10 for att se topp 10 pa denna server.
+RULES_CONSOLE_LINE15 = Skriv !restart for att starta om pa niva 1.
+RULES_MESSAGE_LINE1 = Spelregler och alla kommandon finns nu i din console
+RULES_MESSAGE_LINE2 = Nagra anvandbara kommandon:
 RULES_MESSAGE_LINE3 :
-Say !top10 f'o'r att se the topp 10 players on this server^n
-Say !level f'o'r att se din nuvarande niva och vem som vinner^n
-Say !weapons f'o'r att se f'o'rbrukningen av vapen^n
-Say !score f'o'r att se spelar resultat
+Skriv !top10 for att se topp 10 pa denna server^n
+Skriv !level for att se din nuvarande niva och vem som vinner^n
+Skriv !weapons for att se forbrukningen av vapen^n
+Skriv !score for att se spelar resultat
 :
 SCORES = Resultat
-SLOW_DOWN = Ta't lugnt! Det 'a'r fortfarande uppv'a'rmning!
-SPAWNPROTECTED_KILL = Dina mord r'a'knades inte pga att %%n%s%%e spawnade under de sista %%g%i%%e sekunderna
-STILL_LEVEL_ONE = Du 'a'r inte 'o'ver niva 1 'a'nnu!
+SLOW_DOWN = Ta't lugnt! Det ar fortfarande uppvarmning!
+SPAWNPROTECTED_KILL = Dina kills raknades inte pga att %%n%s%%e spawnade under de sista %%g%i%%e sekunderna
+STILL_LEVEL_ONE = Du har inte passerat niva 1 annu!
 STOLE_LEVEL = %%n%s%%e stal en niva fran %%g%s%%e
-SUICIDE_LEVEL_DOWN = %%n%s%%e f'o'rlorade en niva pga sj'a'lvmord
+SUICIDE_LEVEL_DOWN = %%n%s%%e degraderades en niva pga sjalvmord
 TIED_LEADER = %%n%s%%e har bundit ledaren!
-TK_LEVEL_DOWN = %%n%s%%e gick ner till niva igen %%g%i%%e pga d'o'dande av lagkamrater
-TK_SCORE_DOWN = %%n%s%%e f'o'rlorade %%g%i%%e po'a'ng f'o'r d'o'dande av eget lag
+TK_LEVEL_DOWN = %%n%s%%e degraderades till niva %%g%i%%e pga dodande av lagkamrater
+TK_SCORE_DOWN = %%n%s%%e forlorade %%g%i%%e poang pga dodande i eget lag
 TOP_10 = Topp 10
-TRIPLE_LEVELED = %%n%s%%e gjorde en tripple befodring!!!
-WARMUP_ROUND = Uppv'a'rmnings runda
-WARMUP_ROUND_OVER = Uppv'a'rmnings Rundan 'a'r 'O'ver!
-WARMUP_ROUND_DISPLAY = Uppv'a'rmnings Rundan: %i sekunder kvar
+TRIPLE_LEVELED = %%n%s%%e gjorde en trippel befodring!!!
+WARMUP_ROUND = Uppvarmnings runda
+WARMUP_ROUND_OVER = Uppvarmningen ar over!
+WARMUP_ROUND_DISPLAY = Uppvarmnings runda: %i sekunder kvar
 WEAPONS = Vapen
-WELCOME_MESSAGE_LINE1 = Den h'a'r servern anv'a'nder GunGame %s av Avalanche
-WELCOME_MESSAGE_LINE2 = Kniv Pro 'a'r \rAKTIVERAT!\w
-WELCOME_MESSAGE_LINE3 = Turbo Mod 'a'r \rAKTIVERAT!\w
-WELCOME_MESSAGE_LINE4 = Deathmatch Mode 'a'r \rAKTIVERAT!\w
+WELCOME_MESSAGE_LINE1 = Den har servern anvander GunGame %s av Avalanche
+WELCOME_MESSAGE_LINE2 = Kniv Pro ar \rAKTIVERAT!\w
+WELCOME_MESSAGE_LINE3 = Turbo Mod ar \rAKTIVERAT!\w
+WELCOME_MESSAGE_LINE4 = Deathmatch Mod ar \rAKTIVERAT!\w
 WELCOME_MESSAGE_LINE5 :
-Type !rules f'o'r instuktioner av hur du spelar och en lista av kommandon^n
-Type !level f'o'r att se info om din niva och vem som leder^n
-Type !score f'o'r att se alla spelares resultat och vinster i din konsole^n
+Skriv !rules i consolen for instruktioner av hur du spelar och en lista med kommandon^n
+Skriv !level i consolen for att se info om din niva och vem som leder^n
+Skriv !score i consolen for att se alla spelares resultat och vinster^n
 :
 WINS = vinster
 WON = vann

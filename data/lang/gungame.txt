@@ -1,4 +1,4 @@
-// For GunGame 2.13 - last updated 12:15 AM 1/5/2012
+// For GunGame 2.13 - last updated 10:58 PM 1/2/2013
 
 [en]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
@@ -429,7 +429,7 @@ PRUNING = Pruning %s: %i Eintraege entfernt
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Benoetigte Kills
 RESET_NOT_ALLOWED = Du kannst deinen Level waehrend Teamplay Mode nicht zuruecksetzen!
-RESET_QUERY = Bist du SICHER dass du^nDich selbst auf Level 1 zuruecksetzen moechtest?
+RESET_QUERY = Bist du SICHER dass du Dich selbst^nauf Level 1 zuruecksetzen moechtest?
 RESPAWN_COUNTDOWN = Du wirst in %i Sekunden respawnen
 RULES = Regeln
 RULES_CONSOLE_LINE1 = %i) Du musst einen Kill mit Deiner jetzigen Waffe machen, um einen Level aufzusteigen.
@@ -611,7 +611,7 @@ PRUNING = Pruning %s: %i plaatsen zijn weg
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Nodige kills
 RESET_NOT_ALLOWED = You cannot reset your level during Teamplay Mode!
-RESET_QUERY = Ben je zeker dat je Terug van level 1 wilt beginnen ?
+RESET_QUERY = Ben je zeker dat je^nTerug van level 1 wilt beginnen ?
 RESPAWN_COUNTDOWN = Je komt terug in leven in %i seconds
 RULES = Regels
 RULES_CONSOLE_LINE1 = %i) Je moet een kill hebben met je huidige wapen voor naar het volgende level te gaan.
@@ -793,7 +793,7 @@ PRUNING = Delestage %s : %i entrees effacees
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Frags requis
 RESET_NOT_ALLOWED = Tu ne peux pas revenir au niveau 1 pendant une partie en equipe !
-RESET_QUERY = Es-tu SUR de vouloir revenir au niveau 1 ?
+RESET_QUERY = Es-tu SUR de vouloir^nrevenir au niveau 1 ?
 RESPAWN_COUNTDOWN = Tu vas ressuciter dans %i seconde(s)
 RULES = Regles
 RULES_CONSOLE_LINE1 = %i) Tu dois tuer avec la meme arme courante pour augmenter de niveau.
@@ -1159,7 +1159,7 @@ PRUNING = Pruning %s: %i registros removidos
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Mortes necessarias
 RESET_NOT_ALLOWED = You cannot reset your level during Teamplay Mode!
-RESET_QUERY = Voce tem certeza que voce quer^nvoltar para o nivel 1?
+RESET_QUERY = Voce tem certeza que voce^nquer voltar para o nivel 1?
 RESPAWN_COUNTDOWN = Voce voltara em %i seconds
 RULES = Regras
 RULES_CONSOLE_LINE1 = %i) Voce precisa matar com a sua arma atual para subir de nivel.
@@ -1276,42 +1276,42 @@ YES_TEAMPLAY = Sim, modo em equipe
 
 [es]
 AFK_KILL = Tu frag no conto ya que %%n%s%%e estaba AFK
-AUTOVOTE_RES1 = Playing GunGame with teamplay mode
-AUTOVOTE_RES2 = Playing regular GunGame
-AUTOVOTE_RES3 = Not playing GunGame
+AUTOVOTE_RES1 = Jugando GunGame en modo de equipo
+AUTOVOTE_RES2 = Jugando GunGame en modo individual
+AUTOVOTE_RES3 = No se esta jugando GunGame
 CANCEL = Cancelar
 CLOSE = Cerrar
-FRIENDLYFIRE_ON = %%gFuego Amigo Activado!!!%%e Mira donde disparas!
+FRIENDLYFIRE_ON = %%gFuego Amigo Activado!!!%%e Cuidado donde disparas!
 GAINED_POINTS = Has ganado %%g%i%%e puntos, haciendo un total de %%g%i%%e puntos y %%g%i%%e victorias!
-GAINED_POINTS_REG = You have just gained %%g%i%%e regular points, for a total of %%g%i%%e points with %%g%i%%e wins!
-GAINED_POINTS_TP = You have just gained %%g%i%%e teamplay points, for a total of %%g%i%%e points with %%g%i%%e wins!
+GAINED_POINTS_REG = Has ganado %%g%i%%e puntos individuales, haciendo un total de %%g%i%%e puntos y %%g%i%%e victorias!
+GAINED_POINTS_TP = Has ganado %%g%i%%e puntos en equipo, haciendo un total de %%g%i%%e puntos y %%g%i%%e victorias!
 GUNGAME = GunGame
 HK_LEVEL_DOWN = %%n%s%%e volvio al nivel %%g%i%%e por matar a un rehen
 HK_SCORE_DOWN = %%n%s%%e perdio %%g%i%%e puntos por matar a un rehen
 HK_LEVEL_DOWN_TEAM = El equipo %%n%s%%e volvio al nivel %%g%i%%e por matar a un rehen
 HK_SCORE_DOWN_TEAM = El equipo %%n%s%%e perdio %%g%i%%e puntos por matar a un rehen
-IN_A_ROW = %i in a row
+IN_A_ROW = %i consecutivas
 JUMP_TO_ME = Ir a mi
 LEADER = Lider
-LEADING_ON_LEVEL = %%n%s%%e esta liderando en nivel %%g%i%%e :: %%g%s%%e
-LEADING_ON_LEVEL_TEAM = El equipo %%n%s%%e esta liderando en nivel %%g%i%%e :: %%g%s%%e
+LEADING_ON_LEVEL = %%n%s%%e esta liderando en el nivel %%g%i%%e :: %%g%s%%e
+LEADING_ON_LEVEL_TEAM = El equipo %%n%s%%e esta liderando en el nivel %%g%i%%e :: %%g%s%%e
 LEVEL = Nivel
 LEVEL_MESSAGE_LINE1A = Has hecho %i/%i de tus frags requeridos
 LEVEL_MESSAGE_LINE1B = Tu equipo ha hecho %i/%i de sus frags requeridos
-LEVEL_MESSAGE_LINE2A = Eres el lider
+LEVEL_MESSAGE_LINE2A = Estas liderando
 LEVEL_MESSAGE_LINE2B = Estas empatado en primer puesto
 LEVEL_MESSAGE_LINE2C = Estas %i niveles detras del lider
 LEVEL_MESSAGE_LINE3A = Has ganado %i veces
-LEVEL_MESSAGE_LINE3A_REG = You have %i regular wins
-LEVEL_MESSAGE_LINE3A_TP = You have %i teamplay wins
+LEVEL_MESSAGE_LINE3A_REG = Tienes %i victorias individuales
+LEVEL_MESSAGE_LINE3A_TP = Tienes %i victorias en equipo
 LEVEL_MESSAGE_LINE3B = Has acumulado %i puntos en %i victorias
-LEVEL_MESSAGE_LINE3B_REG = You have accumulated %i regular points over %i wins
-LEVEL_MESSAGE_LINE3B_TP = You have accumulated %i teamplay points over %i wins
+LEVEL_MESSAGE_LINE3B_REG = Has acumulado %i puntos individuales en %i victorias
+LEVEL_MESSAGE_LINE3B_TP = Has acumulado %i puntos en equipo en %i victorias
 LEVEL_MESSAGE_LINE3C = Has ganado %i veces (rankeado %i%s)
 LEVEL_MESSAGE_LINE3D = Has acumulado %i puntos en %i victorias (rankeado %i%s)
-LEVEL_MESSAGE_LINE4 = Your record streak is %i wins in a row
-LEVEL_MESSAGE_LINE4_REG = Your record regular streak is %i wins in a row
-LEVEL_MESSAGE_LINE4_TP = Your record teamplay streak is %i wins in a row
+LEVEL_MESSAGE_LINE4 = Tu record es de %i victorias consecutivas
+LEVEL_MESSAGE_LINE4_REG = Tu record individual es de %i victorias consecutivas
+LEVEL_MESSAGE_LINE4_TP = Tu record en equipo es de %i victorias consecutivas
 LEVEL_MESSAGE_LINE5A = Lideres actuales: %s
 LEVEL_MESSAGE_LINE5B = Lider actual: %s
 LEVEL_MESSAGE_LINE6 = Nivel del Lider: %i (%s)
@@ -1319,143 +1319,143 @@ LEVELS_BEHIND_LEADER = Estas %%g%i%%e niveles detras del lider
 NEXT = Siguiente
 NONE = ninguno
 NO_ONE = nadie
-NO_WIN_LOGGING = Este servidor no guarda victorias
-NOW_ON_LEVEL = Estas en nivel
-ON_LEVEL = Estas en nivel
-ON_LEVEL_TEAM = Tu equipo esta en nivel
-PLAY_GUNGAME = Jugar GunGame?
+NO_WIN_LOGGING = El servidor ha desactivado esta opcion
+NOW_ON_LEVEL = Estas ahora en el nivel
+ON_LEVEL = Estas en el nivel
+ON_LEVEL_TEAM = Tu equipo esta en el nivel
+PLAY_GUNGAME = Jugar GunGame en:
 PLAYER_RESET = %%n%s%%e se reseteo al nivel %%g1%%e
 POINTS = puntos
 POINTS_ABBR = pts
 PRESS_KEY_TO_CONTINUE = Presiona cualquier numero para continuar
 PREVIOUS = Anterior
-PROGRESS_DISPLAY = You need %%n%i%%e kills to advance. Score: %%n%i / %i%%e
+PROGRESS_DISPLAY = Necesitas %%n%i%%e frags para avanzar. Puntaje: %%n%i / %i%%e
 PROGRESS_DISPLAY1 = Estas liderando por %i niveles
 PROGRESS_DISPLAY2 = Estas empatado en primer puesto con %s
-PROGRESS_DISPLAY3 = Estas empatado en primer puesto con otros %s
+PROGRESS_DISPLAY3 = Estas empatado en primer puesto con %s mas
 PROGRESS_DISPLAY4 = Estas %i niveles detras del lider
 PROGRESS_DISPLAY_TEAM1 = Tu equipo esta liderando por %i niveles
-PROGRESS_DISPLAY_TEAM2 = Tu equipo esta empatado con el otro
+PROGRESS_DISPLAY_TEAM2 = Los equipos estan empatados
 PROGRESS_DISPLAY_TEAM3 = Tu equipo esta %i niveles detras del otro
 PRUNING = Limpiando %s: %i entradas removidas
-RECORD_STREAK = Record Streak: %s (%i in a row)
+RECORD_STREAK = Record de victorias: %s (%i consecutivas)
 REQUIRED_KILLS = Frags requeridos
-RESET_NOT_ALLOWED = No puedes resetear tu nivel durante el Juego en Equipo!
-RESET_QUERY = Estas SEGURO de querer^nresetearte a nivel 1?
+RESET_NOT_ALLOWED = No puedes resetear tu nivel durante un Juego en Equipo!
+RESET_QUERY = Estas SEGURO de que^nquieres regresar al nivel 1?
 RESPAWN_COUNTDOWN = Reapareceras en %i segundos
 RULES = Reglas
 RULES_CONSOLE_LINE1 = %i) Debes matar a alguien con tu arma actual para subir de nivel.
-RULES_CONSOLE_LINE2 = %i) Si matas a alguien con un arma incorrecta, no cuenta y seguiras en el mismo nivel.
+RULES_CONSOLE_LINE2 = %i) Si matas a alguien con un arma incorrecta, no contara y seguiras en el mismo nivel.
 RULES_CONSOLE_LINE3 = %i) Puedes ganar niveles PLANTANDO y DESACTIVANDO la bomba.
-RULES_CONSOLE_LINE4 = %i) Si te matas a ti mismo, perderas un nivel.
-RULES_CONSOLE_LINE5 = %i) Fuego Amigo se ACTIVA cuando alguien llega al nivel de GRANADA.
+RULES_CONSOLE_LINE4 = %i) Si te suicidas, perderas un nivel.
+RULES_CONSOLE_LINE5 = %i) El Fuego Amigo se ACTIVA cuando alguien llega al nivel de GRANADA.
 RULES_CONSOLE_LINE6A = %i) PUEDES ganar mas de un nivel por ronda.
 RULES_CONSOLE_LINE6B = %i) Solo puedes ganar un nivel por ronda.
 RULES_CONSOLE_LINE6C = %i) Puedes ganar hasta %i niveles por ronda.
-RULES_CONSOLE_LINE7 = %i) Hay un periodo de gracia al final de cada ronda para cambiar de equipo.
-RULES_CONSOLE_LINE8 = %i) Ya que Knife Pro esta activado, puedes robar un nivel de un oponente matandolo con cuchillo.
+RULES_CONSOLE_LINE7 = %i) Hay un periodo de tiempo al final de cada ronda para que los jugadores puedan cambiar de equipo.
+RULES_CONSOLE_LINE8 = %i) Ya que Knife Pro esta activado, puedes robar un nivel de tus oponentes matandolos con cuchillo.
 RULES_CONSOLE_LINE9 = %i) Ya que Modo Turbo esta activado, recibiras tu arma siguiente inmediatamente al subir de nivel.
-RULES_CONSOLE_LINE10 = %i) Ya que Modo Knife Elite esta activado, al subir de nivel solo podras usar cuchillo hasta la ronda siguiente.
+RULES_CONSOLE_LINE10 = %i) Ya que Modo Knife Elite esta activado, al subir de nivel solo podras usar el cuchillo hasta la siguiente ronda.
 RULES_CONSOLE_LINE11 = %i) Ya que Modo Deathmatch esta activado, reapareceras infinitamente.
 RULES_CONSOLE_LINE12 = %i) Ya que Modo Teamplay esta activado, ganaras puntos como equipo y no individualmente.
-RULES_CONSOLE_LINE13 = Say !level para ver tu nivel actual y quien va ganando.
-RULES_CONSOLE_LINE14 = Say !weapons para ver el orden de las armas.
-RULES_CONSOLE_LINE15 = Say !score para ver el puntaje de todos los jugadores.
-RULES_CONSOLE_LINE16 = Say !top10 para ver los primeros 10 jugadores del server.
-RULES_CONSOLE_LINE17 = Say !restart para resetear tu nivel a 1.
+RULES_CONSOLE_LINE13 = Escribe !level para ver tus estadisticas
+RULES_CONSOLE_LINE14 = Escribe !weapons para ver el orden de las armas
+RULES_CONSOLE_LINE15 = Escribe !score para ver tu nivel y el de todos los jugadores
+RULES_CONSOLE_LINE16 = Escribe !top10 para ver el ranking del server
+RULES_CONSOLE_LINE17 = Escribe !restart para regresar al nivel 1
 RULES_MESSAGE_LINE1 = Las reglas del juego y los comandos de chat estan listados en tu consola
-RULES_MESSAGE_LINE2 = Algunos comandos de chat utiles:
+RULES_MESSAGE_LINE2 = Algunos comandos utiles de chat:
 RULES_MESSAGE_LINE3 :
-Escribe !top10 para ver los primeros 10 jugadores del server^n
-Escribe !level para ver tu nivel actual y quien va ganando^n
+Escribe !top10 para ver el ranking del server^n
+Escribe !level para ver tus estadisticas^n
 Escribe !weapons para ver el orden de las armas^n
-Escribe !score para ver el puntaje de todos los jugadores
+Escribe !score para ver tu nivel y el de todos los jugadores
 :
 SCORE_CAPS = PUNTAJE
-SCORES = Puntuacion
-SLOW_DOWN = Tranquilizate! Todavia es ronda de calentamiento!
+SCORES = Niveles
+SLOW_DOWN = Tranquilo! Esta solo es la ronda de calentamiento!
 SPAWNPROTECTED_KILL = Tu frag no conto ya que %%n%s%%e aparecio en los ultimos %%g%i%%e segundos
-STATS = Stats
-STATS_REGULAR = Regular Stats
-STATS_TEAMPLAY = Teamplay Stats
-STILL_LEVEL_ONE = No has ni pasado el nivel 1 aun!
-STOLE_LEVEL = %%n%s%%e robo un nivel a %%g%s%%e
-STOLE_LEVEL_TEAM = %%n%s%%e robo %%g%i%%e puntos a %%g%s%%e (ganados %%g%i%%e)
+STATS = Ranking
+STATS_REGULAR = Estadisticas individuales
+STATS_TEAMPLAY = Estadisticas en equipo
+STILL_LEVEL_ONE = Aun no has pasado el nivel 1
+STOLE_LEVEL = %%n%s%%e le robo un nivel a %%g%s%%e
+STOLE_LEVEL_TEAM = %%n%s%%e le robo %%g%i%%e puntos a %%g%s%%e (ganados %%g%i%%e)
 SUICIDE_LEVEL_DOWN = %%n%s%%e perdio un nivel por suicidio
 SUICIDE_LEVEL_DOWN_TEAM = El equipo %%n%s%%e volvio a nivel %%g%i%%e por un suicidio
 SUICIDE_SCORE_DOWN_TEAM = El equipo %%n%s%%e perdio %%g%i%%e puntos por un suicidio
 TEAM = equipo
-TIED_LEADER_MULTI = %%n%s%%e esta empatado en nivel %%g%i%%e :: %%g%s%%e con otros %%g%s%%e
-TIED_LEADER_ONE = %%n%s%%e esta empatado en nivel %%g%i%%e :: %%g%s%%e con %%g%s%%e
-TIED_LEADER_TEAM = Los equipos estan empatados en nivel %%g%i%%e :: %%g%s%%e
-TK_LEVEL_DOWN = %%n%s%%e volvio al nivel %%g%i%%e por matar a un companiero de equipo
-TK_LEVEL_DOWN_TEAM = El equipo %%n%s%%e volvio a nivel %%g%i%%e por matar a un companiero de equipo
-TK_SCORE_DOWN = %%n%s%%e perdio %%g%i%%e puntos por matar a un companiero de equipo
-TK_SCORE_DOWN_TEAM = El equipo %%n%s%%e perdio %%g%i%%e puntos por matar a un companiero de equipo
+TIED_LEADER_MULTI = %%n%s%%e esta empatado en el nivel %%g%i%%e :: %%g%s%%e con otros %%g%s%%e
+TIED_LEADER_ONE = %%n%s%%e esta empatado en el nivel %%g%i%%e :: %%g%s%%e con %%g%s%%e
+TIED_LEADER_TEAM = Los equipos estan empatados en el nivel %%g%i%%e :: %%g%s%%e
+TK_LEVEL_DOWN = %%n%s%%e volvio al nivel %%g%i%%e por matar a un miembro de su equipo
+TK_LEVEL_DOWN_TEAM = El equipo %%n%s%%e volvio al nivel %%g%i%%e por matar a un miembro de su equipo
+TK_SCORE_DOWN = %%n%s%%e perdio %%g%i%%e puntos por matar a un miembro de su equipo
+TK_SCORE_DOWN_TEAM = El equipo %%n%s%%e perdio %%g%i%%e puntos por matar a un miembro de su equipo
 TOP_10 = Top 10
-TRAILING_ON_LEVEL_TEAM = El equipo %%n%s%%e esta rezagado en nivel %%g%i%%e :: %%g%s%%e
+TRAILING_ON_LEVEL_TEAM = El equipo %%n%s%%e se esta quedando en el nivel %%g%i%%e :: %%g%s%%e
 TRIPLE_LEVELED = %%n%s%%e subio tres niveles!!!
 UNRANKED = no rankeado
 WARMUP_ROUND = Ronda de Calentamiento
-WARMUP_ROUND_OVER = Fin de Ronda de calentamiento!
+WARMUP_ROUND_OVER = Fin de la Ronda de calentamiento!
 WARMUP_ROUND_DISPLAY = Ronda de Calentamiento: %i segundos restantes
 WEAPONS = Armas
-WELCOME_MESSAGE_LINE1 = Este servidor esta corriendo GunGame %s por Avalanche
-WELCOME_MESSAGE_LINE2 = Knife Pro esta \rACTIVADO!\w
-WELCOME_MESSAGE_LINE3 = Modo Turbo esta \rACTIVADO!\w
-WELCOME_MESSAGE_LINE4 = Modo Knife Elite esta \rACTIVADO!\w
-WELCOME_MESSAGE_LINE5 = Modo Deathmatch esta \rACTIVADO!\w
-WELCOME_MESSAGE_LINE6 = Modo Teamplay esta \rACTIVADO!\w
-WELCOME_MESSAGE_LINE7 = Hay \y%i\w niveles esta ronda!
+WELCOME_MESSAGE_LINE1 = Este servidor esta usando GunGame %s por Avalanche
+WELCOME_MESSAGE_LINE2 = Knife Pro \rACTIVADO!\w
+WELCOME_MESSAGE_LINE3 = Modo Turbo \rACTIVADO!\w
+WELCOME_MESSAGE_LINE4 = Modo Knife Elite \rACTIVADO!\w
+WELCOME_MESSAGE_LINE5 = Modo Deathmatch \rACTIVADO!\w
+WELCOME_MESSAGE_LINE6 = Modo Teamplay \rACTIVADO!\w
+WELCOME_MESSAGE_LINE7 = Hay \y%i\w niveles en este juego!
 WELCOME_MESSAGE_LINE8 :
-Escribe !rules para instrucciones de juego y una lista de comandos^n
-Escribe !level para ver info de tu nivel y quien va liderando^n
-Escribe !score para ver una lista de puntos y victorias de los jugadores^n
+Escribe !rules para ver instrucciones del juego y una lista de comandos^n
+Escribe !level para ver tus estadisticas^n
+Escribe !score para ver tu nivel y el de todos los jugadores^n
 :
-WIN_MOTD_LINE1 = %s gano!
+WIN_MOTD_LINE1 = %s es el ganador!
 WIN_MOTD_LINE2 = el equipo %s
 WIN_MOTD_LINE3 = es el ganador!
-WIN_MOTD_LINE4A = El frag final de <font color=00CC00>%s</font> fue hecho contra <font color=%s>%s
-WIN_MOTD_LINE4B = El frag final de <font color=00CC00>%s</font> fue hecho contra <font color=%s>%s</font> por <font color=%s>%s
-WIN_MOTD_LINE5A = Esta es la victoria de <font color=%s>%s</font> numero <font color=00CC00>%i%s</font>,<br>and their <font color=00CC00>%i%s</font> win in a row (their record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE5A_REG = This is <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> regular win,<br>and their <font color=00CC00>%i%s</font> regular win in a row (their record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE5A_TP = This is <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> teamplay win,<br>and their <font color=00CC00>%i%s</font> teamplay win in a row (their record: <font color=00CC00>%i</font> in a row).
+WIN_MOTD_LINE4A = El frag final :: <font color=00CC00>%s</font> fue hecho contra <font color=%s>%s
+WIN_MOTD_LINE4B = El frag final :: <font color=00CC00>%s</font> fue hecho contra <font color=%s>%s</font> por <font color=%s>%s
+WIN_MOTD_LINE5A = <font color=%s>%s</font> consiguio su <font color=00CC00>%i%s</font> victoria,<br>y su <font color=00CC00>%i%s</font> victoria consecutiva (su record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_LINE5A_REG = <font color=%s>%s</font> consiguio su <font color=00CC00>%i%s</font> victoria individual,<br>y su <font color=00CC00>%i%s</font> victoria individual consecutiva (su record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_LINE5A_TP = <font color=%s>%s</font> consiguio su <font color=00CC00>%i%s</font> victoria en equipo,<br>y su <font color=00CC00>%i%s</font> victoria en equipo consecutiva (su record: <font color=00CC00>%i</font> victorias consecutivas).
 WIN_MOTD_LINE5B = <font color=%s>%s</font> tiene ahora un total de <font color=00CC00>%i</font> puntos.
-WIN_MOTD_LINE5B_REG = <font color=%s>%s</font> now has a total of <font color=00CC00>%i</font> regular points.
-WIN_MOTD_LINE5B_TP = <font color=%s>%s</font> now has a total of <font color=00CC00>%i</font> teamplay points.
-WIN_MOTD_LINE5C = Esta es la victoria de <font color=%s>%s</font> numero <font color=00CC00>%i%s</font>, haciendo un total de <font color=00CC00>%i</font> puntos,<br>and  their <font color=00CC00>%i%s</font> win in a row (their record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE5C_REG = This is <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> regular win, for a total of <font color=00CC00>%i</font> points,<br>and their <font color=00CC00>%i%s</font> regular win in a row (their record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE5C_TP = This is <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> teamplay win, for a total of <font color=00CC00>%i</font> points,<br>and their <font color=00CC00>%i%s</font> teamplay win in a row (their record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE6 = Has gastado <font color=00CC00>%i%%</font> de tu tiempo contribuyendo al equipo ganador.
-WIN_MOTD_LINE7A = Tienes ahora un total de <font color=00CC00>%i</font> victorias.<p>This is your <font color=00CC00>%i%s</font> win in a row (your record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE7A_REG = You now have a total of <font color=00CC00>%i</font> regular wins.<p>This is your <font color=00CC00>%i%s</font> regular win in a row (your record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_LINE7A_TP = You now have a total of <font color=00CC00>%i</font> teamplay wins.<p>This is your <font color=00CC00>%i%s</font> teamplay win in a row (your record: <font color=00CC00>%i</font> in a row).
+WIN_MOTD_LINE5B_REG = <font color=%s>%s</font> tiene ahora un total de <font color=00CC00>%i</font> puntos individuales.
+WIN_MOTD_LINE5B_TP = <font color=%s>%s</font> tiene ahora un total de <font color=00CC00>%i</font> puntos en equipo.
+WIN_MOTD_LINE5C = Esta es la <font color=00CC00>%i%s</font> victoria de <font color=%s>%s</font>, haciendo un total de <font color=00CC00>%i</font> puntos,<br>y su <font color=00CC00>%i%s</font> victoria consecutiva (su record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_LINE5C_REG = Esta es <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> victoria individual, haciendo un total de <font color=00CC00>%i</font> puntos,<br>y su <font color=00CC00>%i%s</font> victoria individual consecutiva (su record: <font color=00CC00>%i</font> consecutivas).
+WIN_MOTD_LINE5C_TP = Esta es <font color=%s>%s</font>'s <font color=00CC00>%i%s</font> victoria en equipo, haciendo un total de <font color=00CC00>%i</font> puntos,<br>ay su <font color=00CC00>%i%s</font> victoria en equipo consecutiva (su record: <font color=00CC00>%i</font> consecutivas).
+WIN_MOTD_LINE6 = Has usado <font color=00CC00>%i%%</font> de tu tiempo contribuyendo al equipo ganador.
+WIN_MOTD_LINE7A = Tienes ahora un total de <font color=00CC00>%i</font> victorias.<p>Esta es tu <font color=00CC00>%i%s</font> victoria consecutiva (tu record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_LINE7A_REG = Tienes ahora un total de <font color=00CC00>%i</font> victorias individuales.<p>Esta es tu <font color=00CC00>%i%s</font> victoria individual consecutiva (tu record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_LINE7A_TP = Tienes ahora un total de <font color=00CC00>%i</font> victorias en equipo.<p>Esta es tu <font color=00CC00>%i%s</font> victoria en equipo consecutiva (tu record: <font color=00CC00>%i</font> victorias consecutivas).
 WIN_MOTD_LINE7B = Tienes un total de <font color=00CC00>%i</font> victorias.
-WIN_MOTD_LINE7B_REG = You have a total of <font color=00CC00>%i</font> regular wins.
-WIN_MOTD_LINE7B_TP = You have a total of <font color=00CC00>%i</font> teamplay wins.
-WIN_MOTD_LINE7C = Has ganado <font color=00CC00>%i</font> puntos, haciendo un total de <font color=00CC00>%i</font> puntos y <font color=00CC00>%i</font> victorias!
-WIN_MOTD_LINE7C_REG = You have just gained <font color=00CC00>%i</font> regular points, for a total of <font color=00CC00>%i</font> points with <font color=00CC00>%i</font> wins!
-WIN_MOTD_LINE7C_TP = You have just gained <font color=00CC00>%i</font> teamplay points, for a total of <font color=00CC00>%i</font> points with <font color=00CC00>%i</font> wins!
+WIN_MOTD_LINE7B_REG = Tienes un total de <font color=00CC00>%i</font> victorias individuales.
+WIN_MOTD_LINE7B_TP = Tienes un total de <font color=00CC00>%i</font> victorias en equipo.
+WIN_MOTD_LINE7C = Acabas de ganar <font color=00CC00>%i</font> puntos, haciendo un total de <font color=00CC00>%i</font> puntos y <font color=00CC00>%i</font> victorias!
+WIN_MOTD_LINE7C_REG = Acabas de ganar <font color=00CC00>%i</font> puntos individuales, haciendo un total de <font color=00CC00>%i</font> puntos y <font color=00CC00>%i</font> victorias!
+WIN_MOTD_LINE7C_TP = Acabas de ganar <font color=00CC00>%i</font> puntos en equipo, haciendo un total de <font color=00CC00>%i</font> puntos y <font color=00CC00>%i</font> victorias!
 WIN_MOTD_LINE8A = El proximo mapa sera <font color=00CC00>%s
-WIN_MOTD_LINE8B = Hay <font color=00CC00>una</font> ronda de este mapa restante.
-WIN_MOTD_LINE8C = Hay <font color=00CC00>%i</font> rondas de este mapa restantes.
-WIN_MOTD_STREAK1 = This is your <font color=00CC00>%i%s</font> win in a row (your record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_STREAK1_REG = This is your <font color=00CC00>%i%s</font> regular win in a row (your record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_STREAK1_TP = This is your <font color=00CC00>%i%s</font> teamplay win in a row (your record: <font color=00CC00>%i</font> in a row).
-WIN_MOTD_STREAK2 = Your record streak is <font color=00CC00>%i</font> wins in a row.
-WIN_MOTD_STREAK2_REG = Your record regular streak is <font color=00CC00>%i</font> wins in a row.
-WIN_MOTD_STREAK2_TP = Your record teamplay streak is <font color=00CC00>%i</font> wins in a row.
-WIN_MOTD_STREAK3 = The all-time record streak, <font color=00CC00>%i</font> wins in a row, was set by <font color=00CC00>%s</font>.
-WIN_MOTD_STREAK3_REG = The all-time record regular streak, <font color=00CC00>%i</font> wins in a row, was set by <font color=00CC00>%s</font>.
-WIN_MOTD_STREAK3_TP = The all-time record teamplay streak, <font color=00CC00>%i</font> wins in a row, was set by <font color=00CC00>%s</font>.
-WIN_MOTD_STREAK4 = <font color=%s>%s</font> just set a new all-time record streak with <font color=00CC00>%i</font> wins in a row!
-WIN_MOTD_STREAK4_REG = <font color=%s>%s</font> just set a new all-time record regular streak with <font color=00CC00>%i</font> wins in a row!
-WIN_MOTD_STREAK4_TP = <font color=%s>%s</font> just set a new all-time record teamplay streak with <font color=00CC00>%i</font> wins in a row!
+WIN_MOTD_LINE8B = Hay <font color=00CC00>una</font> ronda restante en este mapa.
+WIN_MOTD_LINE8C = Hay <font color=00CC00>%i</font> rondas restantes en este mapa.
+WIN_MOTD_STREAK1 = Esta es tu <font color=00CC00>%i%s</font> victoria consecutiva (tu record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_STREAK1_REG = Esta es tu <font color=00CC00>%i%s</font> victoria individual consecutiva (tu record: <font color=00CC00>%i</font> victorias consecutivas).
+WIN_MOTD_STREAK1_TP = Esta es tu <font color=00CC00>%i%s</font> victoria en equipo consecutiva (tu record: <font color=00CC00>%i</font> conecutivo).
+WIN_MOTD_STREAK2 = Tu record es de <font color=00CC00>%i</font> victorias consecutivas.
+WIN_MOTD_STREAK2_REG = Tu record individual es <font color=00CC00>%i</font> victorias consecutivas.
+WIN_MOTD_STREAK2_TP = Tu record en equipo es <font color=00CC00>%i</font> victorias consecutivas.
+WIN_MOTD_STREAK3 = El record de todos los tiempos, <font color=00CC00>%i</font> victorias consecutivas, fue establecido por <font color=00CC00>%s</font>.
+WIN_MOTD_STREAK3_REG = El record individual de todos los tiempos, <font color=00CC00>%i</font> victorias consecutivas, fue establecido por <font color=00CC00>%s</font>.
+WIN_MOTD_STREAK3_TP = El record en equipo de todos los tiempos, <font color=00CC00>%i</font> victorias consecutivas, fue establecido por <font color=00CC00>%s</font>.
+WIN_MOTD_STREAK4 = <font color=%s>%s</font> acaba de establecer un nuevo record con <font color=00CC00>%i</font> victorias consecutivas!
+WIN_MOTD_STREAK4_REG = <font color=%s>%s</font> acaba de establecer un nuevo record de victorias individuales con <font color=00CC00>%i</font> victorias consecutivas!
+WIN_MOTD_STREAK4_TP = <font color=%s>%s</font> acaba de establecer un nuevo record en equipo con <font color=00CC00>%i</font> victorias consecutivas!
 WINS = victorias
-WON = %%n%s%%e gano
-WON_TEAM = El equipo %%n%s%%e gano
-YES_REGULAR = Yes, regular mode
-YES_TEAMPLAY = Yes, teamplay mode
+WON = %%n%s%%e es el ganador
+WON_TEAM = El equipo %%n%s%%e es el ganador
+YES_REGULAR = Modo individual
+YES_TEAMPLAY = Modo de equipo
 
 [sv]
 AFK_KILL = Your kill did not count because %%n%s%%e was AFK
@@ -1887,7 +1887,7 @@ PRUNING = Pruning %s: %i intrari sterse
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Victime necesare
 RESET_NOT_ALLOWED = You cannot reset your level during Teamplay Mode!
-RESET_QUERY = Esti sigur ca vrei sa revii la nivelul 1?
+RESET_QUERY = Esti sigur ca vrei^nsa revii la nivelul 1?
 RESPAWN_COUNTDOWN = Vei reaparea in %i secunde
 RULES = Reguli
 RULES_CONSOLE_LINE1 = %i) Trebuie sa faci victime cu arm ape care o ai pentru a avansa la nivelul urmator
@@ -2070,7 +2070,7 @@ PRUNING = Oprydning %s: %i posteringer fjernet
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = NQdvendige drab
 RESET_NOT_ALLOWED = You cannot reset your level during Teamplay Mode!
-RESET_QUERY = Er du sikker paa at du vil starte forfra paa level 1?
+RESET_QUERY = Er du sikker paa at du^nvil starte forfra paa level 1?
 RESPAWN_COUNTDOWN = Du genstarter i spawn om %i sekunder
 RULES = Regler
 RULES_CONSOLE_LINE1 = %i) Du skal draebe en modspiller fQr du kan avancere til naeste niveau.
@@ -2253,7 +2253,7 @@ PRUNING = Ëèøíèå %s: %i çàïèñåé óäàëåíû
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Íåîáõîäèìî óáèéñòâ
 RESET_NOT_ALLOWED = You cannot reset your level during Teamplay Mode!
-RESET_QUERY = Âû ÓÂÅÐÅÍÛ ^n÷òî õîòèòå ñáðîñèòü ñâîé óðîâåíü äî íà÷àëüíîãî?
+RESET_QUERY = Âû ÓÂÅÐÅÍÛ ^n÷òî õîòèòå^nñáðîñèòü ñâîé óðîâåíü äî íà÷àëüíîãî?
 RESPAWN_COUNTDOWN = Âû ïîÿâèòåñü ÷åðåç %i ñåêóíä
 RULES = Ïðàâèëà
 RULES_CONSOLE_LINE1 = %i) Âû äîëæíû ñîâåðøèòü óáèéñòâî ñ âàøèì íûíåøíèì îðóæèåì, ÷òîáû ïîâûñèòü óðîâåíü.
@@ -2436,7 +2436,7 @@ PRUNING = Okrojenie %s: %i wpisy usuniete
 RECORD_STREAK = Rekord zwyciestw: %s (%i z rzedu)
 REQUIRED_KILLS = Wymagane zabojstwa
 RESET_NOT_ALLOWED = Nie mozesz zresetowac poziomu podczac rozgrywki druzynowej!
-RESET_QUERY = Czy NA PEWNO chcesz^n zresetowac sie do poziomu 1?
+RESET_QUERY = Czy NA PEWNO chcesz^nzresetowac sie do poziomu 1?
 RESPAWN_COUNTDOWN = Odzyjesz za %i sekund
 RULES = Zasady
 RULES_CONSOLE_LINE1 = %i) Musisz wykonac zabojstwo obecna bronia aby zdobyc poziom
@@ -2618,7 +2618,7 @@ PRUNING = Cistim %s: %i stavki ocisceno
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Potrebno ubistava
 RESET_NOT_ALLOWED = Ne mozes resetovati svoj nivo tokom Timske igre!
-RESET_QUERY = Da li si siguran da zelis da se ^nresetujes nazad na nivo 1?
+RESET_QUERY = Da li si siguran da zelis da se^nresetujes nazad na nivo 1?
 RESPAWN_COUNTDOWN = Respawnovaces se za %i sekundi
 RULES = Rules
 RULES_CONSOLE_LINE1 = %i) Moras napraviti 3 ubistva sa trenutnim oruzjem, da bi napredovao na sledeci nivo.
@@ -2986,7 +2986,7 @@ PRUNING = Pruning %s: %i entries removed
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Необходими убийства
 RESET_NOT_ALLOWED = Не можеш да нулираш нивото си по време на Teamplay режим!
-RESET_QUERY = СИГУРЕН ли си че искаш ^nда се върнеш до 1-во ниво?
+RESET_QUERY = СИГУРЕН ли си че искаш^nда се върнеш до 1-во ниво?
 RESPAWN_COUNTDOWN = Ще се преродиш след %i секунди
 RULES = Правила
 RULES_CONSOLE_LINE1 = %i) Трябва да убиеш с текущото си оръжие за да вдигнеш нивото си.
@@ -3169,7 +3169,7 @@ PRUNING = Cistim %s: %i stavki ocisceno
 RECORD_STREAK = Record Streak: %s (%i in a row)
 REQUIRED_KILLS = Potrebno ubojstava
 RESET_NOT_ALLOWED = Ne mozes resetirati svoj nivo tokom Timske igre!
-RESET_QUERY = Da li si siguran da zelis ^nresetirati nazad na nivo 1?
+RESET_QUERY = Da li si siguran da zelis^nresetirati nazad na nivo 1?
 RESPAWN_COUNTDOWN = Respawnovati ces se za %i sekundi
 RULES = Pravila
 RULES_CONSOLE_LINE1 = %i) Moras napraviti 3 ubojtva sa trenutnim oruzjem, da bi napredovao na sljedeci nivo.

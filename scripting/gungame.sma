@@ -27,9 +27,10 @@
 // Thanks especially to all of the translators:
 // arkshine, b!orn, commonbullet, Curryking, Deviance,
 // D o o m, eD., e-N-z, Fr3ak0ut, godlike, harbu, iggy_bus,
-// jopmako, KylixMynxAltoLAG, MeRcyLeZZ, Min2liz, Mordekay,
-// Morpheus759, rpm, SAMURAI16, Simbad, TEG, ToT | V!PER,
-// trawiator, Twilight Suzuka, and webpsiho.
+// jopmako, jozzz, KylixMynxAltoLAG, MeRcyLeZZ, Min2liz,
+// Mordekay, Morpheus759, rpm, SAMURAI16, Simbad, TEG,
+// ToT | V!PER, trawiator, Twilight Suzuka, webpsiho, and
+// others that I surely forgot (sorry!).
 //
 // Thanks to SeNz0r for many of the new sounds!
 //
@@ -45,7 +46,7 @@
 #include <hamsandwich>
 
 // defines to be left alone
-new const GG_VERSION[] =	"2.13b";
+new const GG_VERSION[] =	"2.13c";
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 #define WINSOUNDS_SIZE		(MAX_WINSOUNDS*MAX_WINSOUND_LEN)+1 // for gg_sound_winner
@@ -221,7 +222,7 @@ Float:spawnOrigin[33][3], Float:spawnAngles[33][3], afkCheck[33], playerStats[33
 	#define NEWRECORD	8
 
 	new gg_sql_host, gg_sql_user, gg_sql_pass, gg_sql_db, gg_sql_table, gg_sql_streak_table, gg_sql_winmotd_table,
-	sqlTable[32], sqlStreakTable[32], sqlPlayersTable[32], serverip[64], Handle:tuple, Handle:db, Handle:query, safeName[64], mkQuery[1536];
+	sqlTable[128], sqlStreakTable[128], sqlPlayersTable[128], serverip[64], Handle:tuple, Handle:db, Handle:query, safeName[64], mkQuery[1536];
 #else
 	new gg_stats_file, gg_stats_streak_file;
 
@@ -422,10 +423,10 @@ public plugin_init()
 
 #if defined SQL
 		// SQL cvars
-		gg_sql_host = register_cvar("gg_sql_host","localhost",FCVAR_PROTECTED);
+		gg_sql_host = register_cvar("gg_sql_host","127.0.0.1",FCVAR_PROTECTED);
 		gg_sql_user = register_cvar("gg_sql_user","root",FCVAR_PROTECTED);
 		gg_sql_pass = register_cvar("gg_sql_pass","",FCVAR_PROTECTED);
-		gg_sql_db = register_cvar("gg_sql_db","gungame",FCVAR_PROTECTED); // default should be: amx
+		gg_sql_db = register_cvar("gg_sql_db","amx",FCVAR_PROTECTED);
 		gg_sql_table = register_cvar("gg_sql_table","gg_stats",FCVAR_PROTECTED);
 		gg_sql_streak_table = register_cvar("gg_sql_streak_table","gg_streaks",FCVAR_PROTECTED);
 		gg_sql_winmotd_table = register_cvar("gg_sql_winmotd_table","gg_winmotd",FCVAR_PROTECTED);
@@ -4388,7 +4389,7 @@ spawned(id)
 					new si = get_gg_si();
 #if defined SQL
 					if(!statsPosition[id][si]) statsPosition[id][si] = stats_get_position(id,authid,si);
-					if(0 < statsPosition[id][si] <= TOP_PLAYERS) rcvHandicap = 0; // I'm in the top10
+					if(0 < statsPosition[id][si] && statsPosition[id][si] <= TOP_PLAYERS) rcvHandicap = 0; // I'm in the top10
 #else
 					for(new i=0;i<TOP_PLAYERS;i++)
 					{
@@ -6413,12 +6414,6 @@ public show_win_screen(params[66]) // [winner,loser,gg_win_motd[64]]
 	for(player=1;player<=maxPlayers;player++)
 	{
 		if(!is_user_connected(player)) continue;
-		
-		/*if(pointsExtraction[player][0] == 0 && pointsExtraction[player][1] == 0 && pointsExtraction[player][2] == 0)
-		{
-			log_amx("&&&&& ZERO POINTS! (3) player %i, team %i, team times: %f , %f",player,cs_get_user_team(player),teamTimes[player][winningTeam-1],teamTimes[player][losingTeam-1]);
-			log_message("&&&&& ZERO POINTS! (3) player %i, team %i, team times: %f , %f",player,cs_get_user_team(player),teamTimes[player][winningTeam-1],teamTimes[player][losingTeam-1]);
-		}*/
 
 		if(loserDC) formatex(loserName,31,"%L",player,"NO_ONE");
 		formatex(header,31,"%L",player,"WIN_MOTD_LINE1",winnerName);
@@ -7204,7 +7199,6 @@ public stats_award_points(winner)
 	timeratio = get_pcvar_num(gg_teamplay_timeratio), ignore_bots = get_pcvar_num(gg_ignore_bots);
 	
 	new si = get_gg_si();
-	//log_amx("AWARDING POINTS USING FILE [%s], TEAMPLAY IS [%i]",STATS_FILE[si],teamplay); // DEBUG
 
 	new player, playerWins[32], playerPoints[32], playerStreak[32], playerAuthid[32][32], playerName[32][32],
 	playerTotalPoints[32], players[32], intStreak, playerNum, i, team, Float:time = get_gametime(), systime = get_systime();
@@ -7300,13 +7294,6 @@ public stats_award_points(winner)
 			playerWins[i] = wins;
 			playerPoints[i] = floatround(flPoints);
 			if(playerPoints[i] < 0) playerPoints[i] = 0;
-			
-			// DEBUG
-			/*if(playerPoints[i] < 1)
-			{
-				log_amx("***** ERROR! (1) Negative points for player %i: %i (%f / %i) | Team times: %f , %f",players[i],playerPoints[i],flPoints,wins,teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-				log_message("***** ERROR! (1) Negative points for player %i: %i (%f / %i) | Team times: %f , %f",players[i],playerPoints[i],flPoints,wins,teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-			}*/
 		}
 	}
 
@@ -7623,9 +7610,6 @@ public stats_award_points(winner)
 				// remember for later iterations
 				foundMe[i] = 1;
 				
-				// nothing worth reporting
-				if(!playerWins[i] && !playerPoints[i]) continue;
-				
 				sfWins[0] = SQL_ReadResult(query,1);
 				sfPoints[0] = SQL_ReadResult(query,2);
 				sfStreak[0] = SQL_ReadResult(query,3);
@@ -7645,12 +7629,16 @@ public stats_award_points(winner)
 				pointsExtraction[players[i]][2] = playerTotalPoints[i];
 				pointsExtraction[players[i]][3] = playerStreak[i];
 				//pointsExtraction[players[i]][4] = intStreak; // uncomment to show new record
+				
+				// something worth updating
+				if(playerWins[i] || playerPoints[i])
+				{
+					if(si == 0) query2 = SQL_PrepareQuery(db,"UPDATE `%s` SET wins=wins+'%i',name='%s',timestamp='%i',points=points+'%i',streak='%i' WHERE authid='%s' AND serverip='%s' LIMIT 1;",sqlTable,playerWins[i],playerSafeName[i],systime,playerPoints[i],intStreak,playerSafeAuthid[i],serverip);
+					else query2 = SQL_PrepareQuery(db,"UPDATE `%s` SET wins_tp=wins_tp+'%i',name='%s',timestamp='%i',points_tp=points_tp+'%i',streak_tp='%i' WHERE authid='%s' AND serverip='%s' LIMIT 1;",sqlTable,playerWins[i],playerSafeName[i],systime,playerPoints[i],intStreak,playerSafeAuthid[i],serverip);
 
-				if(si == 0) query2 = SQL_PrepareQuery(db,"UPDATE `%s` SET wins=wins+'%i',name='%s',timestamp='%i',points=points+'%i',streak='%i' WHERE authid='%s' AND serverip='%s' LIMIT 1;",sqlTable,playerWins[i],playerSafeName[i],systime,playerPoints[i],intStreak,playerSafeAuthid[i],serverip);
-				else query2 = SQL_PrepareQuery(db,"UPDATE `%s` SET wins_tp=wins_tp+'%i',name='%s',timestamp='%i',points_tp=points_tp+'%i',streak_tp='%i' WHERE authid='%s' AND serverip='%s' LIMIT 1;",sqlTable,playerWins[i],playerSafeName[i],systime,playerPoints[i],intStreak,playerSafeAuthid[i],serverip);
-
-				SQL_ExecuteAndLog(query2);
-				SQL_FreeHandle(query2);
+					SQL_ExecuteAndLog(query2);
+					SQL_FreeHandle(query2);
+				}
 
 				break;
 			}
@@ -7754,11 +7742,7 @@ public stats_award_points(winner)
 				if(!set[i] && equal(playerAuthid[i],sfAuthid))
 				{
 					set[i] = 1;
-					
-					// I didn't win anything, who cares
-					if(!playerWins[i] && !playerPoints[i]) break;
-
-					setNum++; // important that this is below the if statement
+					setNum++;
 					
 					strtok(sfLineData,sfWins[0],5,sfLineData,111,'^t'); // get wins
 					strtok(sfLineData,dummy,1,sfLineData,111,'^t'); // get name
@@ -7788,13 +7772,6 @@ public stats_award_points(winner)
 					pointsExtraction[players[i]][3] = playerStreak[i];
 					//pointsExtraction[players[i]][4] = intStreak; // uncomment to show new record
 					
-					// DEBUG
-					/*if(playerTotalPoints[i] < 1)
-					{
-						log_amx("***** ERROR! (2) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-						log_message("***** ERROR! (2) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-					}*/
-					
 					break;
 				}
 			}
@@ -7823,13 +7800,6 @@ public stats_award_points(winner)
 			pointsExtraction[players[i]][2] = playerTotalPoints[i];
 			pointsExtraction[players[i]][3] = playerStreak[i];
 			pointsExtraction[players[i]][4] = 0; // show old record
-			
-			// DEBUG
-			/*if(playerTotalPoints[i] < 1)
-			{
-				log_amx("***** ERROR! (3) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-				log_message("***** ERROR! (3) Negative points for player %i: %i | Team times: %f , %f",players[i],playerTotalPoints[i],teamTimes[players[i]][winningTeam-1],teamTimes[players[i]][losingTeam-1]);
-			}*/
 		}
 	}
 
@@ -7882,15 +7852,19 @@ stock stats_clear_struct(struct[statsData],clearAuthid=1)
 // sql version] get a player's last used name and wins from save file
 stock stats_get_data(authid[],struct[statsData],id=0)
 {
-	stats_clear_struct(struct,0); // don't clear authid, in case this is the playerStats array
+	if(!sqlInit || !get_pcvar_num(gg_stats_mode))
+	{
+		stats_clear_struct(struct);
+		return 0;
+	}	
 
-	if(!sqlInit || !get_pcvar_num(gg_stats_mode)) return 0;
-
-	if(playerStats[id][sdAuthid][0]) // already saved my stats
+	if(id > 0 && playerStats[id][sdAuthid][0]) // already saved my stats
 	{
 		struct = playerStats[id];
 		return 1;
 	}
+	
+	stats_clear_struct(struct);
 
 	SQL_QuoteString(db,safeName,63,authid);
 	query = SQL_PrepareQuery(db,"SELECT wins,name,points,streak,wins_tp,points_tp,streak_tp FROM `%s` WHERE authid='%s' AND serverip='%s' LIMIT 1;",sqlTable,safeName,serverip);
@@ -7900,58 +7874,65 @@ stock stats_get_data(authid[],struct[statsData],id=0)
 		SQL_FreeHandle(query);
 		return 0;
 	}
-
-	if(!SQL_NumResults(query))
+	
+	copy(struct[sdAuthid],31,authid); // setting authid will cache it if this is playerStats
+	
+	new found = SQL_NumResults(query);
+	if(found)
 	{
-		// just plop my authid in here, so next call to stats_get_data won't have to query
-		stats_clear_struct(playerStats[id]);
-		copy(playerStats[id][sdAuthid],31,authid);
-		
-		SQL_FreeHandle(query);
-		return 0;
-	}
+		struct[sdWins][0] = SQL_ReadResult(query,0);
+		SQL_ReadResult(query,1,struct[sdName],31);
+		struct[sdPoints][0] = SQL_ReadResult(query,2);
+		struct[sdStreak][0] = SQL_ReadResult(query,3);
+		struct[sdWins][1] = SQL_ReadResult(query,4);
+		struct[sdPoints][1] = SQL_ReadResult(query,5);
+		struct[sdStreak][1] = SQL_ReadResult(query,6);
+	}	
 
-	struct[sdWins][0] = SQL_ReadResult(query,0);
-	SQL_ReadResult(query,1,struct[sdName],31);
-	struct[sdPoints][0] = SQL_ReadResult(query,2);
-	struct[sdStreak][0] = SQL_ReadResult(query,3);
-	struct[sdWins][1] = SQL_ReadResult(query,4);
-	struct[sdPoints][1] = SQL_ReadResult(query,5);
-	struct[sdStreak][1] = SQL_ReadResult(query,6);
-
-	if(id) playerStats[id] = struct; // if this is a connected player, save it
+	if(id > 0) playerStats[id] = struct; // if this is a connected player, save it
 
 	SQL_FreeHandle(query);
-	return 1;
+	return found;
 }
 #else
 // get a player's last used name and wins from save file
 stock stats_get_data(authid[],struct[statsData],id=0)
-{
-	stats_clear_struct(struct,0); // don't clear authid, in case this is the playerStats array
-
-	if(!get_pcvar_num(gg_stats_mode)) return 0;
+{	
+	if(!get_pcvar_num(gg_stats_mode))
+	{
+		stats_clear_struct(struct);
+		return 0;
+	}	
 
 	get_pcvar_string(gg_stats_file,sfFile,63);
-	if(!file_exists(sfFile)) return 0;
+	if(!file_exists(sfFile))
+	{
+		stats_clear_struct(struct);
+		return 0;
+	}	
 
-	if(playerStats[id][sdAuthid][0]) // already saved my stats
+	if(id > 0)
 	{
-		struct = playerStats[id];
-		return 1;
+		if(playerStats[id][sdAuthid][0]) // already saved my stats
+		{
+			struct = playerStats[id];
+			return 1;
+		}
+		else if(statsPosition[id][0] > 0) // check top regular players
+		{
+			ArrayGetArray(statsArray,ArrayGetCell(statsPointers[0],statsPosition[id][0]-1),playerStats[id]);
+			struct = playerStats[id];
+			return 1;
+		}
+		else if(statsPosition[id][1] > 0) // check top teamplay players
+		{
+			ArrayGetArray(statsArray,ArrayGetCell(statsPointers[1],statsPosition[id][1]-1),playerStats[id]);
+			struct = playerStats[id];
+			return 1;
+		}
 	}
-	else if(statsPosition[id][0] > 0) // check top regular players
-	{
-		ArrayGetArray(statsArray,ArrayGetCell(statsPointers[0],statsPosition[id][0]-1),playerStats[id]);
-		struct = playerStats[id];
-		return 1;
-	}
-	else if(statsPosition[id][1] > 0) // check top teamplay players
-	{
-		ArrayGetArray(statsArray,ArrayGetCell(statsPointers[1],statsPosition[id][1]-1),playerStats[id]);
-		struct = playerStats[id];
-		return 1;
-	}
+	
+	stats_clear_struct(struct);
 
 	// now we have to go through the file
 
@@ -7975,20 +7956,18 @@ stock stats_get_data(authid[],struct[statsData],id=0)
 
 	// close 'er up, boys! (hmm....)
 	fclose(file);
+	
+	copy(struct[sdAuthid],31,authid); // setting authid will cache it if this is playerStats
 
 	// couldn't find
-	if(!found)
+	if(found)
 	{
-		// just plop my authid in here, so next call to stats_get_data won't have to search through the file
-		stats_clear_struct(playerStats[id]);
-		copy(playerStats[id][sdAuthid],31,authid);
-		return 0;
+		stats_str_to_struct(sfLineData,struct); // convert line from file to a struct
 	}
 	
-	stats_str_to_struct(sfLineData,struct); // convert line from file to a struct
-	if(id) playerStats[id] = struct; // if this is a connected player, save it
+	if(id > 0) playerStats[id] = struct; // if this is a connected player, save it
 
-	return 1;
+	return found;
 }
 #endif
 	
@@ -8336,8 +8315,6 @@ stats_get_position(id,authid[],si)
 {
 	if(statsArray && statsPointers[si] && statsSize[si])
 	{
-		//log_amx("assigning stats position to %i for array %i",id,index);
-
 		statsPosition[id][si] = -1; // mark that we've at least attempted to find it
 
 		for(new i=0;i<statsSize[si];i++)
@@ -8452,11 +8429,11 @@ stock stats_prune(max_time=-1)
 // opens the database
 stock sql_init(creation_queries=1)
 {
-	new host[32], user[32], pass[32], dbname[32];
-	get_pcvar_string(gg_sql_host,host,31);
-	get_pcvar_string(gg_sql_user,user,31);
-	get_pcvar_string(gg_sql_pass,pass,31);
-	get_pcvar_string(gg_sql_db,dbname,31);
+	new host[128], user[128], pass[128], dbname[128];
+	get_pcvar_string(gg_sql_host,host,127);
+	get_pcvar_string(gg_sql_user,user,127);
+	get_pcvar_string(gg_sql_pass,pass,127);
+	get_pcvar_string(gg_sql_db,dbname,127);
 
 	new sqlErrorCode, sqlError[1024];
 	
@@ -8483,7 +8460,7 @@ stock sql_init(creation_queries=1)
 	if(creation_queries)
 	{
 		// set up the main table, unfortunately we have to split it up to avoid "input line too long" compile errors
-		get_pcvar_string(gg_sql_table,sqlTable,31);
+		get_pcvar_string(gg_sql_table,sqlTable,127);
 		
 		new super_long_query[716],
 		len = formatex(super_long_query,715,"CREATE TABLE IF NOT EXISTS `%s`(`authid` VARCHAR(31) NOT NULL,`wins` SMALLINT(6) default '0',`name` VARCHAR(31) NOT NULL,`timestamp` INT(10) UNSIGNED default '0',`points` MEDIUMINT(9) default '0',`streak` SMALLINT(6) default '0',`wins_tp` SMALLINT(6) default '0',`points_tp` MEDIUMINT(9) default '0',",sqlTable);
@@ -8497,7 +8474,7 @@ stock sql_init(creation_queries=1)
 		}
 		
 		// set up the streaks table
-		get_pcvar_string(gg_sql_streak_table,sqlStreakTable,31);
+		get_pcvar_string(gg_sql_streak_table,sqlStreakTable,127);
 		
 		query = SQL_PrepareQuery(db,"CREATE TABLE IF NOT EXISTS `%s`(`type` ENUM('0C','0R','1C','1R') default NULL,`authid` VARCHAR(31) NOT NULL,`streak` SMALLINT(6) default '0',`name` VARCHAR(31) NOT NULL,`timestamp` INT(10) UNSIGNED default '0',`serverip` VARCHAR(63) NOT NULL,INDEX(`authid`,`serverip`),INDEX(`type`));",sqlStreakTable);
 		if(!SQL_ExecuteAndLog(query))
@@ -8507,7 +8484,7 @@ stock sql_init(creation_queries=1)
 		}
 		
 		// set up the players table
-		get_pcvar_string(gg_sql_winmotd_table,sqlPlayersTable,31);
+		get_pcvar_string(gg_sql_winmotd_table,sqlPlayersTable,127);
 		
 		len = formatex(super_long_query,715,"CREATE TABLE IF NOT EXISTS `%s`(`id` tinyint(4) NOT NULL default '0',`authid` varchar(31) NOT NULL,`name` varchar(31) NOT NULL,`team` tinyint(4) default '0',`level` tinyint(4) default '0',`weapon` varchar(23) NOT NULL,`flags` tinyint(4) default '0',`wins` smallint(6) default '0',`points` mediumint(9) default '0',`new_points` mediumint(9) default '0',`record_streak` smallint(6) default '0',",sqlPlayersTable);
 		formatex(super_long_query[len],715-len,"`current_streak` smallint(6) default '0',`stats_position` smallint(6) unsigned default '0',`teamtime_winning` smallint(6) unsigned default '0',`teamtime_losing` smallint(6) unsigned default '0',`timestamp` int(10) unsigned default '0',`serverip` varchar(63) NOT NULL, PRIMARY KEY(`id`));");

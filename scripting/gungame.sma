@@ -45,7 +45,7 @@
 #include <hamsandwich>
 
 // defines to be left alone
-new const GG_VERSION[] =	"2.13";
+new const GG_VERSION[] =	"2.13b";
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 #define WINSOUNDS_SIZE		(MAX_WINSOUNDS*MAX_WINSOUND_LEN)+1 // for gg_sound_winner
@@ -221,7 +221,7 @@ Float:spawnOrigin[33][3], Float:spawnAngles[33][3], afkCheck[33], playerStats[33
 	#define NEWRECORD	8
 
 	new gg_sql_host, gg_sql_user, gg_sql_pass, gg_sql_db, gg_sql_table, gg_sql_streak_table, gg_sql_winmotd_table,
-	sqlTable[32], sqlStreakTable[32], sqlPlayersTable[32], serverip[22], Handle:tuple, Handle:db, Handle:query, safeName[64], mkQuery[1536];
+	sqlTable[32], sqlStreakTable[32], sqlPlayersTable[32], serverip[64], Handle:tuple, Handle:db, Handle:query, safeName[64], mkQuery[1536];
 #else
 	new gg_stats_file, gg_stats_streak_file;
 
@@ -430,7 +430,7 @@ public plugin_init()
 		gg_sql_streak_table = register_cvar("gg_sql_streak_table","gg_streaks",FCVAR_PROTECTED);
 		gg_sql_winmotd_table = register_cvar("gg_sql_winmotd_table","gg_winmotd",FCVAR_PROTECTED);
 
-		get_user_ip(0,serverip,21,0); // with port
+		get_user_ip(0,serverip,63,0); // with port
 #else
 		sqlInit = 1;
 #endif
@@ -6245,11 +6245,15 @@ public show_win_screen(params[66]) // [winner,loser,gg_win_motd[64]]
 	winningTeam = _:cs_get_user_team(winner), losingTeam = _:(!(winningTeam-1)) + 1;
 
 #if defined SQL
-	// web page
-	if(!isdigit(winner_motd[0]) || winner_motd[0] == '2')
+	// abort if showing web page but could not initialize SQL
+	if(!isdigit(winner_motd[0]) && !sqlInit)
 	{
-		if(!sqlInit) return 0;
+		return 0;
+	}
 
+	// if web page or set to 2, update database
+	if((!isdigit(winner_motd[0]) || winner_motd[0] == '2') && sqlInit)
+	{
 		new systime = get_systime(), player, playerAuthid[32], playerName[32], playerSafeAuthid[64], playerSafeName[64], si = get_gg_si(), flags, team,
 		origLen = len = formatex(motd,1535,"DELETE FROM `%s`; INSERT INTO `%s` VALUES ('0','','%s','%i','%i','','%i','%i','%i','%i','%i','%i','%i','%i','%i','%i','%s'),",sqlPlayersTable,sqlPlayersTable,nextmap,stats_mode,stats_split,teamplay,timeratio,winner,loser,loserDC,winningTeam,losingTeam,iterations,roundsleft,systime,serverip);
 
@@ -6324,9 +6328,9 @@ public show_win_screen(params[66]) // [winner,loser,gg_win_motd[64]]
 
 				show_motd(player,url,header);
 			}
+			
+			return 1;
 		}
-
-		return 1;
 	}
 #endif
 
@@ -8483,7 +8487,7 @@ stock sql_init(creation_queries=1)
 		
 		new super_long_query[716],
 		len = formatex(super_long_query,715,"CREATE TABLE IF NOT EXISTS `%s`(`authid` VARCHAR(31) NOT NULL,`wins` SMALLINT(6) default '0',`name` VARCHAR(31) NOT NULL,`timestamp` INT(10) UNSIGNED default '0',`points` MEDIUMINT(9) default '0',`streak` SMALLINT(6) default '0',`wins_tp` SMALLINT(6) default '0',`points_tp` MEDIUMINT(9) default '0',",sqlTable);
-		formatex(super_long_query[len],715-len,"`streak_tp` SMALLINT(6) default '0',`serverip` VARCHAR(21) NOT NULL,PRIMARY KEY(`authid`,`serverip`),INDEX(`wins`),INDEX(`points`),INDEX(`wins_tp`), INDEX(`points_tp`));");
+		formatex(super_long_query[len],715-len,"`streak_tp` SMALLINT(6) default '0',`serverip` VARCHAR(63) NOT NULL,PRIMARY KEY(`authid`,`serverip`),INDEX(`wins`),INDEX(`points`),INDEX(`wins_tp`), INDEX(`points_tp`));");
 
 		query = SQL_PrepareQuery(db,super_long_query);
 		if(!SQL_ExecuteAndLog(query))
@@ -8495,7 +8499,7 @@ stock sql_init(creation_queries=1)
 		// set up the streaks table
 		get_pcvar_string(gg_sql_streak_table,sqlStreakTable,31);
 		
-		query = SQL_PrepareQuery(db,"CREATE TABLE IF NOT EXISTS `%s`(`type` ENUM('0C','0R','1C','1R') default NULL,`authid` VARCHAR(31) NOT NULL,`streak` SMALLINT(6) default '0',`name` VARCHAR(31) NOT NULL,`timestamp` INT(10) UNSIGNED default '0',`serverip` VARCHAR(21) NOT NULL,INDEX(`authid`,`serverip`),INDEX(`type`));",sqlStreakTable);
+		query = SQL_PrepareQuery(db,"CREATE TABLE IF NOT EXISTS `%s`(`type` ENUM('0C','0R','1C','1R') default NULL,`authid` VARCHAR(31) NOT NULL,`streak` SMALLINT(6) default '0',`name` VARCHAR(31) NOT NULL,`timestamp` INT(10) UNSIGNED default '0',`serverip` VARCHAR(63) NOT NULL,INDEX(`authid`,`serverip`),INDEX(`type`));",sqlStreakTable);
 		if(!SQL_ExecuteAndLog(query))
 		{
 			SQL_FreeHandle(query);
@@ -8506,7 +8510,7 @@ stock sql_init(creation_queries=1)
 		get_pcvar_string(gg_sql_winmotd_table,sqlPlayersTable,31);
 		
 		len = formatex(super_long_query,715,"CREATE TABLE IF NOT EXISTS `%s`(`id` tinyint(4) NOT NULL default '0',`authid` varchar(31) NOT NULL,`name` varchar(31) NOT NULL,`team` tinyint(4) default '0',`level` tinyint(4) default '0',`weapon` varchar(23) NOT NULL,`flags` tinyint(4) default '0',`wins` smallint(6) default '0',`points` mediumint(9) default '0',`new_points` mediumint(9) default '0',`record_streak` smallint(6) default '0',",sqlPlayersTable);
-		formatex(super_long_query[len],715-len,"`current_streak` smallint(6) default '0',`stats_position` smallint(6) unsigned default '0',`teamtime_winning` smallint(6) unsigned default '0',`teamtime_losing` smallint(6) unsigned default '0',`timestamp` int(10) unsigned default '0',`serverip` varchar(21) NOT NULL, PRIMARY KEY(`id`));");
+		formatex(super_long_query[len],715-len,"`current_streak` smallint(6) default '0',`stats_position` smallint(6) unsigned default '0',`teamtime_winning` smallint(6) unsigned default '0',`teamtime_losing` smallint(6) unsigned default '0',`timestamp` int(10) unsigned default '0',`serverip` varchar(63) NOT NULL, PRIMARY KEY(`id`));");
 
 		query = SQL_PrepareQuery(db,super_long_query);
 		if(!SQL_ExecuteAndLog(query))

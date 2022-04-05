@@ -46,7 +46,7 @@
 #include <hamsandwich>
 
 // defines to be left alone
-new const GG_VERSION[] =	"2.13c";
+new const GG_VERSION[] =	"2.14";
 #define LANG_PLAYER_C		-76 // for gungame_print (arbitrary number)
 #define TNAME_SAVE		pev_noise3 // for blocking game_player_equip and player_weaponstrip
 #define WINSOUNDS_SIZE		(MAX_WINSOUNDS*MAX_WINSOUND_LEN)+1 // for gg_sound_winner
@@ -9243,6 +9243,12 @@ stock start_mapvote()
 		// set maxrounds back
 		set_cvar_num("mp_winlimit",oldWinLimit);
 		set_cvar_num("mp_maxrounds",oldMaxRounds);
+	}
+
+	// Galileo
+	else if(find_plugin_byfile("galileo.amxx") != INVALID_PLUGIN_ID)
+	{
+		server_cmd("gal_startvote -nochange");
 	}
 
 	// NOTHING?
